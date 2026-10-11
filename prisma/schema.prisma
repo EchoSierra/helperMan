@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String   @unique
+  phone        String?
+  address      String?
+  status       Status   @default(ACTIVE)
+  role         UserRole @default(EMPLOYEE)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  permissions  Permission[]
+  logs         AuditLog[]
+  roles        Role[]
+  identities   Identity[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  EMPLOYEE
+  MAINTAINER
+  ADMIN
+}
+
+model Role {
+  id          String   @id
+  name        String   @unique
+  description String?
+  users       User[]
+  permissions Permission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id
+  action       String
+  resource     String
+  users       User[]
+  roleId       String?
+  role        Role?    @relation(fields: [roleId], references: [id])
+
+  @@map("permissions")
+}
+
+model Identity {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  profileData Json?
+
+  @@map("identities")
+}
+
+model Qualification {
+  id          String   @id @default(cuid())
+  userId      String?
+  title       String
+  category    String?
+  issuer      String?
+  validFrom   DateTime?
+  validUntil  DateTime?
+  isVerified  Boolean  @default(false)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("qualifications")
+}
+
+model Equipment {
+  id              String   @id
+  name            String
+  type            String?
+  status          Status   @default(AVAILABLE)
+  currentHolderId String?
+  attributes      Json?
+
+  @@map("equipment")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  action       String
+  actorId      String?
+  targetType   String
+  targetId     String?
+  oldValue     Json?
+  newValue     Json?
+  ipAddress     String?
+  timestamp    DateTime @default(now())
+  user         User?    @relation(fields: [actorId], references: [id])
+
+  @@map("audit_logs")
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  PENDING
+  AVAILABLE
+  ASSIGNED
+  IN_REPAIR
+}
