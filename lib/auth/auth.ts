@@ -118,12 +118,18 @@ function createAuth() {
             };
           },
           after: async (session) => {
-            await recordAuditEvent({
-              actorId: session.userId,
-              action: 'SESSION_STARTED',
-              targetType: 'account',
-              targetId: session.userId,
-            });
+            try {
+              await recordAuditEvent({
+                actorId: session.userId,
+                action: 'SESSION_STARTED',
+                targetType: 'account',
+                targetId: session.userId,
+              });
+            } catch (error) {
+              // Fail closed: no session may exist without its audit event.
+              await prisma.authSession.deleteMany({ where: { id: session.id } });
+              throw error;
+            }
           },
         },
       },
@@ -163,6 +169,19 @@ function createAuth() {
         const audit = (actorId: string | null, action: AuditAction) =>
           recordAuditEvent({ actorId, action, targetType: 'account', targetId: actorId });
 
+        const revokeNewSession = async () => {
+          const sessionId = ctx.context.newSession?.session.id;
+          if (sessionId) await prisma.authSession.deleteMany({ where: { id: sessionId } });
+        };
+
+        try {
+          await auditAuthEvent();
+        } catch {
+          await revokeNewSession();
+          throw new APIError('INTERNAL_SERVER_ERROR', { message: 'Request could not be completed' });
+        }
+
+        async function auditAuthEvent() {
         if (ctx.path === '/sign-in/email') {
           const email = typeof ctx.body?.email === 'string' ? ctx.body.email.trim().toLowerCase() : null;
           const found = email ? await ctx.context.internalAdapter.findUserByEmail(email) : null;
@@ -182,6 +201,7 @@ function createAuth() {
             const userId = ctx.context.newSession?.user.id ?? null;
             await audit(userId, 'TOTP_VERIFIED');
           }
+        }
         }
       }),
     },
