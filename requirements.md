@@ -32,6 +32,8 @@ The first delivery is a Maintainer-focused helper registry. It includes secure s
 - **As an Administrator, I want to manage Maintainer accounts and permissions so that access can be granted and withdrawn appropriately.**
   - Administrators can create and delete Maintainer accounts and manage their permissions, within the first-delivery scope.
   - An account can be disabled or have its access revoked. Once disabled or revoked, it cannot sign in or continue using an existing authenticated session to access protected content or actions.
+  - Administrators and Maintainers can change their own password. The change requires the current password and a valid TOTP code, revokes all of the user's sessions, and is audited.
+  - Administrators can delete Maintainer accounts (not Administrator accounts or their own).
   - Password reset changes or replaces the password credential only; it does not satisfy, remove, or disable the mandatory TOTP requirement.
   - A privileged account that has had its TOTP enrollment reset must complete TOTP re-enrollment before regaining access to protected content or actions.
   - TOTP recovery requires assistance from a verified Administrator. A reset does not grant access before re-enrollment is complete.

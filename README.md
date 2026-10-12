@@ -48,11 +48,11 @@ The database volume is retained. To stop and remove that local data volume, use 
 ### 3. Apply migrations and generate Prisma Client
 
 ```sh
-npx prisma migrate dev
+npx prisma migrate deploy
 npx prisma generate
 ```
 
-This applies the repository's existing migrations to the database configured by `DATABASE_URL`. Do not point this development command at a production database. If you are connecting to an existing database, first verify its identity and migration state.
+`migrate deploy` applies the repository's existing migrations to the database configured by `DATABASE_URL` without prompting. Do not use `npx prisma migrate dev` for setup: it detects a harmless cosmetic difference on two legacy join tables (`_PermissionToUser`, `_RoleToUser`) and asks for a new migration name. If you see that prompt, press Ctrl+C; do not create a migration. Do not point these commands at a production database. If you are connecting to an existing database, first verify its identity and migration state.
 
 ### 4. Create a local Administrator and run the app
 
@@ -62,7 +62,7 @@ Set a temporary development password in the environment for the bootstrap comman
 set -a
 . ./.env
 set +a
-export BOOTSTRAP_ADMIN_PASSWORD='use-a-unique-local-password-of-at-least-12-characters'
+export BOOTSTRAP_ADMIN_PASSWORD='my12CaracterPasswordForAdmin'
 npm run auth:bootstrap-admin -- --email admin@example.test --name "Local Administrator" --confirm
 unset BOOTSTRAP_ADMIN_PASSWORD
 unset DATABASE_URL BETTER_AUTH_SECRET BETTER_AUTH_URL POSTGRES_PASSWORD
@@ -86,6 +86,17 @@ npm run typecheck
 npm run build
 ```
 
+### Database UI
+
+`docker compose up -d adminer` starts Adminer at <http://localhost:8081> (bound to localhost only; dev use only). Log in with System `PostgreSQL`, Server `db`, and the `POSTGRES_USER` / `POSTGRES_PASSWORD` from `.env`.
+
+PostgreSQL integration tests run against a separate, disposable database (the name must contain `test`; the runner refuses anything else and applies migrations to it). Create it once, set `TEST_DATABASE_URL` in `.env` (see `.env.example`), and run:
+
+```sh
+docker compose exec -T db psql -U admin -d postgres -c "CREATE DATABASE helper_manager_test"
+npm run test:integration
+```
+
 For a local production-mode smoke test after a successful build:
 
 ```sh
@@ -96,7 +107,7 @@ This starts Next.js on port 3000 using the production build. It does not configu
 
 ## Production deployment
 
-**Production is not ready to launch yet.** Account-management and audit-log pages, an operational no-other-Administrator recovery procedure, and the organization-approved helper and audit retention schedules remain outstanding. The production preflight deliberately fails until its account and retention requirements are met. Review [docs/TDD.md](./docs/TDD.md) and [requirements.md](./requirements.md) before deployment.
+**Production is not ready to launch yet.** The Administrator account-management page (the read-only audit-log page exists), an operational no-other-Administrator recovery procedure, and the organization-approved helper and audit retention schedules remain outstanding. The production preflight deliberately fails until its account and retention requirements are met. Review [the living implementation plan](./docs/IMPLEMENTATION_PLAN.md), [docs/TDD.md](./docs/TDD.md), and [requirements.md](./requirements.md) before deployment.
 
 The repository does not include a production Compose/Kubernetes configuration. Use an operator-managed supported Linux host or container runtime and a separately managed PostgreSQL service. Do not use the development Compose file for production: it publishes database ports, includes unused Redis, and does not run the application.
 
