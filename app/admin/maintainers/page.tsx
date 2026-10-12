@@ -164,7 +164,7 @@ export default async function MaintainersPage({
                         {account.roles.includes('ADMIN') && account.roles.includes('MAINTAINER') && (
                           <form action={revokeAdminRoleAction}>
                             <input name="userId" type="hidden" value={account.id} />
-                            <button className={buttonClass} type="submit">Remove Administrator role</button>
+                            <button className={buttonClass} type="submit">Revoke Administrator role</button>
                           </form>
                         )}
                         {account.roles.includes('MAINTAINER') && !account.roles.includes('ADMIN') && (
