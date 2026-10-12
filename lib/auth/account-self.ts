@@ -52,10 +52,19 @@ export async function changeOwnPassword(input: unknown) {
     where: { userId: actor.userId, providerId: 'credential' },
     select: { id: true, password: true },
   });
-  if (!account?.password || !(await verifyPassword({ hash: account.password, password: data.currentPassword }))) {
+  const fail = async (): Promise<never> => {
+    await recordAuditEvent({
+      actorId: actor.userId,
+      action: 'PASSWORD_CHANGE_FAILED',
+      targetType: 'account',
+      targetId: actor.userId,
+    });
     throw new ForbiddenError();
+  };
+  if (!account?.password || !(await verifyPassword({ hash: account.password, password: data.currentPassword }))) {
+    return fail();
   }
-  if (!(await verifySecondFactor(actor.userId, data.code))) throw new ForbiddenError();
+  if (!(await verifySecondFactor(actor.userId, data.code))) return fail();
   const passwordHash = await hashPassword(data.newPassword);
   await prisma.$transaction(async (tx) => {
     await tx.authAccount.update({ where: { id: account.id }, data: { password: passwordHash } });
