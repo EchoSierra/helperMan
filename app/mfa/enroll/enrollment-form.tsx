@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { QRCodeSVG } from 'qrcode.react';
 import { authClient } from '@/lib/auth/client';
 
 function getTotpSecret(uri: string): string | null {
@@ -64,8 +65,11 @@ export default function EnrollmentForm() {
       <form className="mt-8 space-y-5" onSubmit={verify}>
         <ol className="list-decimal space-y-2 pl-5 text-sm">
           <li>Open an authenticator app and add a time-based account.</li>
-          <li>Enter this setup key manually. Keep it private and do not send it to anyone.</li>
+          <li>Scan this QR code, or enter the setup key manually. Keep both private and do not send them to anyone.</li>
         </ol>
+        <div className="inline-block rounded bg-white p-3" role="img" aria-label="Authenticator setup QR code">
+          <QRCodeSVG value={totpUri} size={176} />
+        </div>
         {secret ? (
           <code className="block break-all rounded bg-gray-100 p-3 text-sm" aria-label="Authenticator setup key">
             {secret}
