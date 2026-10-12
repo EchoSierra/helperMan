@@ -97,6 +97,12 @@ docker compose exec -T db psql -U admin -d postgres -c "CREATE DATABASE helper_m
 npm run test:integration
 ```
 
+Browser end-to-end tests use Playwright against the test database (`TEST_DATABASE_URL`) on port 3100, so they can run next to `npm run dev`. Do not run them at the same time as the integration suite. Install the browser once with `npx playwright install chromium`, then run:
+
+```bash
+npm run test:e2e
+```
+
 For a local production-mode smoke test after a successful build:
 
 ```sh
