@@ -32,6 +32,10 @@ export const AUDIT_ACTIONS = [
   'QUALIFICATION_CREATED',
   'QUALIFICATION_UPDATED',
   'QUALIFICATION_EXPIRY_REPORT_ACCESSED',
+  'RETENTION_POLICY_SET',
+  'RETENTION_RUN',
+  'HELPER_PURGED',
+  'AUDIT_EVENTS_PURGED',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -40,7 +44,7 @@ export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 export type AuditEventInput = {
   actorId: string | null;
   action: AuditAction;
-  targetType: 'account' | 'session' | 'helper' | 'qualification' | 'report';
+  targetType: 'account' | 'session' | 'helper' | 'qualification' | 'report' | 'retention';
   targetId: string | null;
 };
 

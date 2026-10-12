@@ -21,7 +21,8 @@ async function main() {
   });
   if (admins < 2) failures.push(`Need at least 2 enabled Administrators with verified TOTP (found ${admins}).`);
 
-  failures.push(...retentionPolicyBlockers(process.env));
+  const policies = await prisma.retentionPolicy.findMany({ select: { kind: true } });
+  failures.push(...retentionPolicyBlockers(policies.map((policy) => policy.kind)));
 
   if (failures.length > 0) {
     for (const failure of failures) console.error(`BLOCKER: ${failure}`);

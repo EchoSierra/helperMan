@@ -39,6 +39,7 @@ export default async function Home() {
         {canManageAccounts(access) && (
           <nav aria-label="Administration" className="mt-6 flex flex-wrap gap-3">
             <Link className="rounded bg-black px-4 py-2 text-white" href="/admin/maintainers">Account management</Link>
+            <Link className="rounded bg-black px-4 py-2 text-white" href="/admin/retention">Retention schedules</Link>
           </nav>
         )}
         {!canAccessHelperData(access) && (

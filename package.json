@@ -13,6 +13,7 @@
     "auth:recover-admin": "tsx scripts/recover-admin.ts",
     "auth:preflight": "tsx scripts/preflight.ts",
     "test:integration": "vitest run --config vitest.integration.config.mts",
+    "retention:run": "tsx scripts/run-retention.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

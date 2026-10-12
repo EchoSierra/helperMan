@@ -69,22 +69,12 @@ describe('auth configuration', () => {
 
 describe('production retention preflight', () => {
   it('blocks until both organization schedules are approved', () => {
-    expect(retentionPolicyBlockers({})).toHaveLength(2);
-    expect(
-      retentionPolicyBlockers({
-        HELPER_RETENTION_POLICY_APPROVED: 'true',
-        AUDIT_RETENTION_POLICY_APPROVED: 'false',
-      }),
-    ).toHaveLength(1);
+    expect(retentionPolicyBlockers([])).toHaveLength(2);
+    expect(retentionPolicyBlockers(['INACTIVE_HELPER'])).toHaveLength(1);
   });
 
   it('passes the retention gate only after both schedules are approved', () => {
-    expect(
-      retentionPolicyBlockers({
-        HELPER_RETENTION_POLICY_APPROVED: 'true',
-        AUDIT_RETENTION_POLICY_APPROVED: 'true',
-      }),
-    ).toEqual([]);
+    expect(retentionPolicyBlockers(['INACTIVE_HELPER', 'AUDIT_LOG'])).toEqual([]);
   });
 });
 

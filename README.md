@@ -111,6 +111,18 @@ npm run start
 
 This starts Next.js on port 3000 using the production build. It does not configure TLS or a reverse proxy.
 
+## Retention
+
+Administrators record the organization's approved schedules at `/admin/retention` (period in days plus a decision reference; the approving Administrator and time are stored and audited). There are no defaults. `npm run auth:preflight` fails until both schedules exist. Nothing is deleted until an operator runs the job:
+
+```bash
+npm run retention:run -- --kind inactive-helper            # dry run: counts only
+npm run retention:run -- --kind inactive-helper --confirm  # hard-deletes helpers inactive longer than the period, with qualifications
+RETENTION_DATABASE_URL='<privileged role>' npm run retention:run -- --kind audit-log --confirm
+```
+
+The inactive period counts from the moment a helper is set inactive (reactivation resets it). Each purged helper is recorded as a minimal `HELPER_PURGED` audit event (id only).
+
 ## Production deployment
 
 **Production is not ready to launch yet.** The Administrator account-management page (the read-only audit-log page exists), the organization's approval of the no-other-Administrator recovery procedure below, and the organization-approved helper and audit retention schedules remain outstanding. The production preflight deliberately fails until its account and retention requirements are met. Review [the living implementation plan](./docs/IMPLEMENTATION_PLAN.md), [docs/TDD.md](./docs/TDD.md), and [requirements.md](./requirements.md) before deployment.
@@ -125,7 +137,7 @@ The repository does not include a production Compose/Kubernetes configuration. U
    - `DATABASE_URL`
    - `BETTER_AUTH_SECRET` (at least 32 random characters; protect it as a credential)
    - `BETTER_AUTH_URL` (the public `https://` origin)
-   - `HELPER_RETENTION_POLICY_APPROVED=true` and `AUDIT_RETENTION_POLICY_APPROVED=true` only after the organization has formally approved both schedules.
+   - Optional `RETENTION_DATABASE_URL`: a privileged role used only by the audit-log retention job (the application role cannot delete audit events).
 4. Deploy the reviewed application revision and install locked dependencies:
 
    ```sh

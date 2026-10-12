@@ -160,7 +160,16 @@ export async function updateHelper(input: unknown): Promise<void> {
   const actor = await requireMaintainer();
   const { helperId, ...changes } = data;
   await prisma.$transaction(async (tx) => {
-    const result = await tx.helper.updateMany({ where: { id: helperId }, data: changes });
+    const current = await tx.helper.findUnique({ where: { id: helperId }, select: { active: true } });
+    if (!current) throw new RecordNotFoundError();
+    // The retention clock starts when a helper becomes inactive and resets on reactivation.
+    const deactivatedAt =
+      changes.active === undefined || changes.active === current.active
+        ? undefined
+        : changes.active
+          ? null
+          : new Date();
+    const result = await tx.helper.updateMany({ where: { id: helperId }, data: { ...changes, deactivatedAt } });
     if (result.count !== 1) throw new RecordNotFoundError();
     await recordAuditEvent(
       { actorId: actor.userId, action: 'HELPER_UPDATED', targetType: 'helper', targetId: helperId },

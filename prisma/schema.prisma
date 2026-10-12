@@ -251,6 +251,8 @@ model Helper {
   phone     String?
   address   String?
   active    Boolean  @default(true)
+  // Set when the helper becomes inactive; the retention period counts from here.
+  deactivatedAt DateTime? @db.Timestamptz(3)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
@@ -258,6 +260,7 @@ model Helper {
 
   @@index([firstName, lastName, id])
   @@index([lastName, firstName, id])
+  @@index([deactivatedAt])
   @@map("helpers")
 }
 
@@ -274,4 +277,21 @@ model HelperQualification {
   @@index([helperId])
   @@index([validThrough])
   @@map("helper_qualifications")
+}
+
+enum RetentionKind {
+  INACTIVE_HELPER
+  AUDIT_LOG
+}
+
+/// Organization-approved retention schedule, maintained by Administrators.
+/// No defaults exist: a kind without a row is "not approved" and nothing is deleted.
+model RetentionPolicy {
+  kind              RetentionKind @id
+  periodDays        Int
+  decisionReference String
+  approvedById      String
+  approvedAt        DateTime      @default(now()) @db.Timestamptz(3)
+
+  @@map("retention_policies")
 }

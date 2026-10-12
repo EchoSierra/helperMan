@@ -23,6 +23,7 @@ type Role = 'ADMIN' | 'MAINTAINER';
 export async function resetDatabase() {
   await prisma.$executeRawUnsafe('TRUNCATE TABLE "audit_events"');
   await prisma.qualification.deleteMany();
+  await prisma.retentionPolicy.deleteMany();
   await prisma.helper.deleteMany();
   await prisma.authUser.deleteMany();
 }
