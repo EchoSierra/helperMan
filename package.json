@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "auth:bootstrap-admin": "tsx scripts/bootstrap-admin.ts",
+    "auth:recover-admin": "tsx scripts/recover-admin.ts",
     "auth:preflight": "tsx scripts/preflight.ts",
     "test:integration": "vitest run --config vitest.integration.config.mts"
   },
