@@ -3,7 +3,9 @@ import { listAccounts } from '@/features/accounts/service';
 import {
   createMaintainerAction,
   deleteMaintainerAction,
+  grantAdminRoleAction,
   grantMaintainerRoleAction,
+  revokeAdminRoleAction,
   revokeMaintainerRoleAction,
   resetPasswordAction,
   resetTotpAction,
@@ -17,6 +19,8 @@ export const dynamic = 'force-dynamic';
 const MESSAGES: Record<string, string> = {
   'role-granted': 'Maintainer role granted. The user needs no new sign-in.',
   'role-revoked': 'Maintainer role revoked and sessions revoked.',
+  'admin-granted': 'Administrator role granted. The user needs no new sign-in.',
+  'admin-revoked': 'Administrator role revoked and sessions revoked.',
   deleted: 'Maintainer account deleted.',
   created: 'Maintainer created. Share the initial password through a separate secure channel.',
   disabled: 'Account disabled and its sessions revoked.',
@@ -149,6 +153,18 @@ export default async function MaintainersPage({
                           <form action={revokeMaintainerRoleAction}>
                             <input name="userId" type="hidden" value={account.id} />
                             <button className={buttonClass} type="submit">Revoke Maintainer role</button>
+                          </form>
+                        )}
+                        {account.roles.includes('MAINTAINER') && !account.roles.includes('ADMIN') && !account.disabled && (
+                          <form action={grantAdminRoleAction}>
+                            <input name="userId" type="hidden" value={account.id} />
+                            <button className={buttonClass} type="submit">Make Administrator</button>
+                          </form>
+                        )}
+                        {account.roles.includes('ADMIN') && account.roles.includes('MAINTAINER') && (
+                          <form action={revokeAdminRoleAction}>
+                            <input name="userId" type="hidden" value={account.id} />
+                            <button className={buttonClass} type="submit">Remove Administrator role</button>
                           </form>
                         )}
                         {account.roles.includes('MAINTAINER') && !account.roles.includes('ADMIN') && (

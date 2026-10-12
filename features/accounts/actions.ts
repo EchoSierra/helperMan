@@ -5,7 +5,9 @@ import { ZodError } from 'zod';
 import {
   createMaintainerAccount,
   deleteMaintainerAccount,
+  grantAdminRole,
   grantMaintainerRole,
+  revokeAdminRole,
   revokeMaintainerRole,
   resetPassword,
   resetTotp,
@@ -73,4 +75,12 @@ export async function grantMaintainerRoleAction(formData: FormData) {
 
 export async function revokeMaintainerRoleAction(formData: FormData) {
   await run('role-revoked', () => revokeMaintainerRole({ userId: text(formData, 'userId') }));
+}
+
+export async function grantAdminRoleAction(formData: FormData) {
+  await run('admin-granted', () => grantAdminRole({ userId: text(formData, 'userId') }));
+}
+
+export async function revokeAdminRoleAction(formData: FormData) {
+  await run('admin-revoked', () => revokeAdminRole({ userId: text(formData, 'userId') }));
 }

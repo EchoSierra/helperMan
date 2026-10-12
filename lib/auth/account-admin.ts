@@ -139,6 +139,49 @@ export async function revokeMaintainerRole(input: unknown) {
   });
 }
 
+/** Promotes an enabled Maintainer to Administrator (the Maintainer role is kept). */
+export async function grantAdminRole(input: unknown) {
+  const actor = await requireAdministrator();
+  const { userId } = targetSchema.parse(input);
+  assertNotSelf(actor, userId);
+  await prisma.$transaction(async (tx) => {
+    const target = await tx.authUser.findUnique({
+      where: { id: userId },
+      select: { disabled: true, roleAssignments: { select: { role: true } } },
+    });
+    const roles = target?.roleAssignments.map((assignment) => assignment.role) ?? [];
+    if (!target || target.disabled || !roles.includes('MAINTAINER') || roles.includes('ADMIN')) {
+      throw new ForbiddenError();
+    }
+    await tx.authRoleAssignment.create({ data: { userId, role: 'ADMIN', assignedById: actor.userId } });
+    await recordAuditEvent({ actorId: actor.userId, action: 'ADMIN_ROLE_GRANTED', targetType: 'account', targetId: userId }, tx);
+  });
+}
+
+/** Demotes an Administrator who also holds the Maintainer role; never the last verified Administrators. */
+export async function revokeAdminRole(input: unknown) {
+  const actor = await requireAdministrator();
+  const { userId } = targetSchema.parse(input);
+  assertNotSelf(actor, userId);
+  await prisma.$transaction(async (tx) => {
+    const target = await tx.authUser.findUnique({
+      where: { id: userId },
+      select: { disabled: true, twoFactorEnabled: true, roleAssignments: { select: { role: true } } },
+    });
+    const roles = target?.roleAssignments.map((assignment) => assignment.role) ?? [];
+    if (!target || !roles.includes('ADMIN') || !roles.includes('MAINTAINER')) throw new ForbiddenError();
+    if (!target.disabled && target.twoFactorEnabled) {
+      const verifiedAdminCount = await tx.authUser.count({
+        where: { disabled: false, twoFactorEnabled: true, roleAssignments: { some: { role: 'ADMIN' } } },
+      });
+      if (verifiedAdminCount <= 2) throw new ForbiddenError();
+    }
+    await tx.authRoleAssignment.deleteMany({ where: { userId, role: 'ADMIN' } });
+    await revokeAllSessions(tx, userId);
+    await recordAuditEvent({ actorId: actor.userId, action: 'ADMIN_ROLE_REVOKED', targetType: 'account', targetId: userId }, tx);
+  });
+}
+
 /** Administrator-assisted password reset after out-of-band identity verification. */
 export async function resetPassword(input: unknown) {
   const actor = await requireAdministrator();
