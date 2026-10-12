@@ -8,21 +8,21 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  firstName    String
-  lastName     String
-  email        String   @unique
-  phone        String?
-  address      String?
-  status       Status   @default(ACTIVE)
-  role         UserRole @default(EMPLOYEE)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String?
+  address   String?
+  status    Status   @default(ACTIVE)
+  role      UserRole @default(EMPLOYEE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  permissions  Permission[]
-  logs         AuditLog[]
-  roles        Role[]
-  identities   Identity[]
+  permissions Permission[]
+  logs        AuditLog[]
+  roles       Role[]
+  identities  Identity[]
 
   @@map("users")
 }
@@ -34,8 +34,8 @@ enum UserRole {
 }
 
 model Role {
-  id          String   @id
-  name        String   @unique
+  id          String       @id
+  name        String       @unique
   description String?
   users       User[]
   permissions Permission[]
@@ -44,46 +44,46 @@ model Role {
 }
 
 model Permission {
-  id          String   @id
-  action       String
-  resource     String
-  users       User[]
-  roleId       String?
-  role        Role?    @relation(fields: [roleId], references: [id])
+  id       String  @id
+  action   String
+  resource String
+  users    User[]
+  roleId   String?
+  role     Role?   @relation(fields: [roleId], references: [id])
 
   @@map("permissions")
 }
 
 model Identity {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
+  id          String @id @default(cuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id])
   profileData Json?
 
   @@map("identities")
 }
 
 model Qualification {
-  id          String   @id @default(cuid())
-  userId      String?
-  title       String
-  category    String?
-  issuer      String?
-  validFrom   DateTime?
-  validUntil  DateTime?
-  isVerified  Boolean  @default(false)
-  metadata    Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String    @id @default(cuid())
+  userId     String?
+  title      String
+  category   String?
+  issuer     String?
+  validFrom  DateTime?
+  validUntil DateTime?
+  isVerified Boolean   @default(false)
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@map("qualifications")
 }
 
 model Equipment {
-  id              String   @id
+  id              String  @id
   name            String
   type            String?
-  status          Status   @default(AVAILABLE)
+  status          Status  @default(AVAILABLE)
   currentHolderId String?
   attributes      Json?
 
@@ -91,16 +91,16 @@ model Equipment {
 }
 
 model AuditLog {
-  id           String   @id @default(cuid())
-  action       String
-  actorId      String?
-  targetType   String
-  targetId     String?
-  oldValue     Json?
-  newValue     Json?
-  ipAddress     String?
-  timestamp    DateTime @default(now())
-  user         User?    @relation(fields: [actorId], references: [id])
+  id         String   @id @default(cuid())
+  action     String
+  actorId    String?
+  targetType String
+  targetId   String?
+  oldValue   Json?
+  newValue   Json?
+  ipAddress  String?
+  timestamp  DateTime @default(now())
+  user       User?    @relation(fields: [actorId], references: [id])
 
   @@map("audit_logs")
 }
@@ -112,4 +112,166 @@ enum Status {
   AVAILABLE
   ASSIGNED
   IN_REPAIR
+}
+
+// ---------------------------------------------------------------------------
+// Authentication and authorization foundation (Better Auth).
+// These tables are deliberately separate from the legacy `User` model, which
+// combines people and accounts. No legacy rows are mapped or migrated until an
+// approved mapping exists (docs/TDD.md section 11).
+// All Better Auth model names are mapped in lib/auth/auth.ts.
+// ---------------------------------------------------------------------------
+
+enum AuthRole {
+  ADMIN
+  MAINTAINER
+}
+
+model AuthUser {
+  id               String   @id
+  name             String
+  email            String   @unique
+  emailVerified    Boolean  @default(false)
+  image            String?
+  twoFactorEnabled Boolean? @default(false)
+  disabled         Boolean  @default(false)
+  createdAt        DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @db.Timestamptz(3)
+
+  sessions        AuthSession[]
+  accounts        AuthAccount[]
+  twoFactor       AuthTwoFactor?
+  roleAssignments AuthRoleAssignment[]
+
+  @@map("auth_users")
+}
+
+model AuthSession {
+  id          String   @id
+  userId      String
+  token       String   @unique
+  expiresAt   DateTime @db.Timestamptz(3)
+  mfaVerified Boolean  @default(false)
+  // Better Auth requires these columns; this application always writes NULL.
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  user AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("auth_sessions")
+}
+
+model AuthAccount {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+
+  user AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("auth_accounts")
+}
+
+model AuthVerification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([identifier])
+  @@map("auth_verifications")
+}
+
+model AuthTwoFactor {
+  id                      String    @id
+  userId                  String    @unique
+  secret                  String
+  backupCodes             String
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime? @db.Timestamptz(3)
+
+  user AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_two_factors")
+}
+
+/// Single source of role truth. Only the approved coarse roles exist.
+model AuthRoleAssignment {
+  id           String   @id @default(cuid())
+  userId       String
+  role         AuthRole
+  assignedById String?
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  user AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@map("auth_role_assignments")
+}
+
+/// Minimal accountability trail: actor, action, target, time. No foreign keys,
+/// so history survives account deletion. Never add values, IPs, or user agents.
+model AuditEvent {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  targetType String
+  targetId   String?
+  occurredAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([occurredAt])
+  @@index([targetType, targetId])
+  @@index([actorId])
+  @@map("audit_events")
+}
+
+model Helper {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  address   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  qualifications HelperQualification[]
+
+  @@index([firstName, lastName, id])
+  @@index([lastName, firstName, id])
+  @@map("helpers")
+}
+
+model HelperQualification {
+  id           String    @id @default(cuid())
+  helperId     String
+  title        String
+  validThrough DateTime? @db.Date
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+
+  helper Helper @relation(fields: [helperId], references: [id], onDelete: Cascade)
+
+  @@index([helperId])
+  @@index([validThrough])
+  @@map("helper_qualifications")
 }
