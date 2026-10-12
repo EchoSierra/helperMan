@@ -8,6 +8,7 @@ vi.mock('@/lib/auth/guards', () => ({
 }));
 
 import prisma from '@/lib/db';
+import { clearAudit } from './db';
 import { getAuth } from '@/lib/auth/auth';
 import { changeOwnPassword } from '@/lib/auth/account-self';
 import { ForbiddenError } from '@/lib/auth/errors';
@@ -26,7 +27,7 @@ const attempt = (overrides: Record<string, string> = {}, code?: string) =>
 
 beforeEach(async () => {
   actor.userId = 'user-1';
-  await prisma.auditEvent.deleteMany();
+  await clearAudit();
   await prisma.authUser.deleteMany();
   const { secretConfig } = await getAuth().$context;
   await prisma.authUser.create({

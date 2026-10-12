@@ -1,7 +1,8 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { hashPassword } from 'better-auth/crypto';
 
 import prisma from '@/lib/db';
+import { clearAudit } from './db';
 import { getAuth } from '@/lib/auth/auth';
 
 const PASSWORD = 'correct horse battery';
@@ -25,7 +26,7 @@ async function makeUser(opts: { disabled?: boolean } = {}) {
 }
 
 beforeEach(async () => {
-  await prisma.auditEvent.deleteMany();
+  await clearAudit();
   await prisma.authUser.deleteMany();
 });
 
@@ -69,5 +70,42 @@ describe('authentication audit events (PostgreSQL, real Better Auth)', () => {
     ).rejects.toThrow();
     expect(await actions()).toContain('SIGN_IN_BLOCKED');
     expect(await prisma.authSession.count()).toBe(0);
+  });
+});
+
+describe('fail-closed auth auditing', () => {
+  it('leaves no session behind when the audit write fails', async () => {
+    await makeUser();
+    vi.spyOn(prisma.auditEvent, 'create').mockRejectedValue(new Error('audit down'));
+    await expect(
+      getAuth().api.signInEmail({ body: { email: 'u@example.test', password: PASSWORD }, headers: HEADERS() }),
+    ).rejects.toThrow();
+    vi.restoreAllMocks();
+    expect(await prisma.authSession.count()).toBe(0);
+  });
+});
+
+describe('audit immutability (database trigger)', () => {
+  it('rejects UPDATE and DELETE of audit events', async () => {
+    const event = await prisma.auditEvent.create({
+      data: { actorId: null, action: 'SIGN_IN_FAILED', targetType: 'account', targetId: null },
+    });
+    await expect(prisma.auditEvent.update({ where: { id: event.id }, data: { action: 'SIGN_OUT' } })).rejects.toThrow(
+      /append-only/,
+    );
+    await expect(prisma.auditEvent.delete({ where: { id: event.id } })).rejects.toThrow(/append-only/);
+    await expect(prisma.auditEvent.deleteMany()).rejects.toThrow(/append-only/);
+    expect(await prisma.auditEvent.count()).toBe(1);
+  });
+
+  it('allows DELETE only inside a transaction that opts in for retention', async () => {
+    await prisma.auditEvent.create({
+      data: { actorId: null, action: 'SIGN_IN_FAILED', targetType: 'account', targetId: null },
+    });
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe("SET LOCAL app.audit_retention = 'on'");
+      await tx.auditEvent.deleteMany();
+    });
+    expect(await prisma.auditEvent.count()).toBe(0);
   });
 });

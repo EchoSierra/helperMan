@@ -8,6 +8,7 @@ vi.mock('@/lib/auth/guards', () => ({
 }));
 
 import prisma from '@/lib/db';
+import { clearAudit } from './db';
 import {
   createMaintainerAccount,
   deleteMaintainerAccount,
@@ -21,7 +22,7 @@ import { ForbiddenError } from '@/lib/auth/errors';
 const PASSWORD = 'correct horse battery';
 
 async function reset() {
-  await prisma.auditEvent.deleteMany();
+  await clearAudit();
   await prisma.authSession.deleteMany();
   await prisma.authRoleAssignment.deleteMany();
   await prisma.authTwoFactor.deleteMany();

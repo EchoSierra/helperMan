@@ -13,6 +13,7 @@ vi.mock('@/lib/auth/guards', async () => {
 });
 
 import prisma from '@/lib/db';
+import { clearAudit } from './db';
 import { listAuditEvents } from '@/features/audit/service';
 import { createHelper, getHelperFormData, getHelperProfile, listHelpers } from '@/features/helpers/service';
 import { createQualification, listQualificationExpiries } from '@/features/qualifications/service';
@@ -23,7 +24,7 @@ const actions = async () => (await prisma.auditEvent.findMany({ select: { action
 beforeEach(async () => {
   actor.roles = ['MAINTAINER'];
   vi.restoreAllMocks();
-  await prisma.auditEvent.deleteMany();
+  await clearAudit();
   await prisma.helper.deleteMany();
   await prisma.authUser.deleteMany();
   await prisma.authUser.create({ data: { id: 'maint-1', email: 'm@example.test', name: 'M', emailVerified: true } });
@@ -56,7 +57,7 @@ describe('audit reads are recorded and fail closed', () => {
   it('records helper, qualification and report reads', async () => {
     const { helperId } = await createHelper({ firstName: 'A', lastName: 'B' });
     await createQualification({ helperId, title: 'CPR', validThrough: '2000-01-01' });
-    await prisma.auditEvent.deleteMany();
+    await clearAudit();
 
     await listHelpers({});
     await getHelperFormData(helperId);

@@ -14,6 +14,7 @@ vi.mock('@/lib/auth/guards', async () => {
 });
 
 import prisma from '@/lib/db';
+import { clearAudit } from './db';
 import { createHelper, listHelpers, updateHelper } from '@/features/helpers/service';
 import { createQualification, updateQualification } from '@/features/qualifications/service';
 import { ForbiddenError } from '@/lib/auth/errors';
@@ -23,7 +24,7 @@ const actions = async () => (await prisma.auditEvent.findMany({ select: { action
 
 beforeEach(async () => {
   actor.roles = ['MAINTAINER'];
-  await prisma.auditEvent.deleteMany();
+  await clearAudit();
   await prisma.helper.deleteMany();
   await prisma.authUser.deleteMany();
   await prisma.authUser.create({
