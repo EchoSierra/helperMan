@@ -1,5 +1,6 @@
 'use server';
 
+import { formFields } from '@/features/form-data';
 import { requireMaintainer } from '@/lib/auth/guards';
 import { InvalidCursorError } from '@/features/helpers/errors';
 import type { QualificationExpiryActionState } from '@/features/helpers/action-state';
@@ -19,7 +20,7 @@ export async function loadMoreQualificationExpiriesAction(
   formData: FormData,
 ): Promise<QualificationExpiryActionState> {
   await requireMaintainer();
-  const parsed = cursorSchema.safeParse(Object.fromEntries(formData.entries()));
+  const parsed = cursorSchema.safeParse(formFields(formData));
   if (!parsed.success || !parsed.data.afterId) {
     return { ...previous, message: 'The report page could not be loaded. Refresh and try again.' };
   }

@@ -1,5 +1,6 @@
 'use server';
 
+import { formFields } from '@/features/form-data';
 import { revalidatePath } from 'next/cache';
 import { requireMaintainer } from '@/lib/auth/guards';
 import { createHelper, listHelpers, updateHelper } from './service';
@@ -25,7 +26,7 @@ export async function searchHelpersAction(
   formData: FormData,
 ): Promise<HelperDirectoryActionState> {
   await requireMaintainer();
-  const parsed = directorySearchFormSchema.safeParse(Object.fromEntries(formData.entries()));
+  const parsed = directorySearchFormSchema.safeParse(formFields(formData));
   if (!parsed.success) return { ...previous, message: 'Enter a valid search and try again.' };
   if (
     parsed.data.intent === 'more' &&
@@ -57,7 +58,7 @@ export async function createHelperAction(
   formData: FormData,
 ): Promise<FormActionState> {
   await requireMaintainer();
-  const parsed = helperFormSchema.safeParse(Object.fromEntries(formData.entries()));
+  const parsed = helperFormSchema.safeParse(formFields(formData));
   if (!parsed.success) return { message: 'Review the highlighted fields.', fieldErrors: fieldErrors(parsed.error) };
 
   const input = createHelperSchema.safeParse(parsed.data);
@@ -73,7 +74,7 @@ export async function updateHelperAction(
   formData: FormData,
 ): Promise<FormActionState> {
   await requireMaintainer();
-  const parsed = helperFormSchema.safeParse(Object.fromEntries(formData.entries()));
+  const parsed = helperFormSchema.safeParse(formFields(formData));
   if (!parsed.success) return { message: 'Review the highlighted fields.', fieldErrors: fieldErrors(parsed.error) };
 
   const input = updateHelperSchema.safeParse({ helperId, ...parsed.data });

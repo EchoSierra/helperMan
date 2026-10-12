@@ -1,5 +1,6 @@
 'use server';
 
+import { formFields } from '@/features/form-data';
 import { revalidatePath } from 'next/cache';
 import { requireMaintainer } from '@/lib/auth/guards';
 import { createQualification, updateQualification } from './service';
@@ -26,7 +27,7 @@ export async function saveQualificationAction(
   formData: FormData,
 ): Promise<FormActionState> {
   await requireMaintainer();
-  const fields = qualificationFormSchema.safeParse(Object.fromEntries(formData.entries()));
+  const fields = qualificationFormSchema.safeParse(formFields(formData));
   if (!fields.success) return { message: 'Review the highlighted fields.', fieldErrors: fieldErrors(fields.error) };
 
   try {
