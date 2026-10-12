@@ -12,6 +12,8 @@ import { clearAudit } from './db';
 import {
   createMaintainerAccount,
   deleteMaintainerAccount,
+  grantAdminRole,
+  revokeAdminRole,
   resetPassword,
   resetTotp,
   revokeMaintainerRole,
@@ -128,6 +130,46 @@ describe('account administration (PostgreSQL)', () => {
     expect(await prisma.authSession.count({ where: { userId } })).toBe(0);
     expect(await prisma.authAccount.count({ where: { userId } })).toBe(0);
     expect(await actions()).toContain('ACCOUNT_DELETED');
+  });
+
+  it('promotes an enabled Maintainer to Administrator, keeping the Maintainer role, with an audit event', async () => {
+    const { userId } = await createMaintainerAccount({ email: 'p@example.test', name: 'P', password: PASSWORD });
+    await addSession(userId);
+    await grantAdminRole({ userId });
+    const roles = (await prisma.authRoleAssignment.findMany({ where: { userId } })).map((r) => r.role).sort();
+    expect(roles).toEqual(['ADMIN', 'MAINTAINER']);
+    expect(await prisma.authSession.count({ where: { userId } })).toBe(1);
+    expect(await actions()).toContain('ADMIN_ROLE_GRANTED');
+    await expect(grantAdminRole({ userId })).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it('refuses to promote oneself, unknown, disabled or non-Maintainer accounts', async () => {
+    await expect(grantAdminRole({ userId: 'admin-1' })).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(grantAdminRole({ userId: 'nobody' })).rejects.toBeInstanceOf(ForbiddenError);
+    const { userId } = await createMaintainerAccount({ email: 'x@example.test', name: 'X', password: PASSWORD });
+    await prisma.authUser.update({ where: { id: userId }, data: { disabled: true } });
+    await expect(grantAdminRole({ userId })).rejects.toBeInstanceOf(ForbiddenError);
+    await makeAdmin('admin-2');
+    await prisma.authRoleAssignment.deleteMany({ where: { userId: 'admin-2', role: 'MAINTAINER' } });
+    await expect(grantAdminRole({ userId: 'admin-2' })).rejects.toBeInstanceOf(ForbiddenError);
+    expect(await prisma.authRoleAssignment.count({ where: { role: 'ADMIN' } })).toBe(2);
+  });
+
+  it('demotes an Administrator back to Maintainer, ends sessions, and keeps two verified Administrators', async () => {
+    const { userId } = await createMaintainerAccount({ email: 'm@example.test', name: 'M', password: PASSWORD });
+    await prisma.authUser.update({ where: { id: userId }, data: { twoFactorEnabled: true } });
+    await grantAdminRole({ userId });
+    await addSession(userId);
+    // Only two verified Administrators exist (admin-1 and the promoted user).
+    await expect(revokeAdminRole({ userId })).rejects.toBeInstanceOf(ForbiddenError);
+    await makeAdmin('admin-3');
+    await prisma.authRoleAssignment.create({ data: { userId: 'admin-3', role: 'MAINTAINER' } });
+    await revokeAdminRole({ userId });
+    const roles = (await prisma.authRoleAssignment.findMany({ where: { userId } })).map((r) => r.role);
+    expect(roles).toEqual(['MAINTAINER']);
+    expect(await prisma.authSession.count({ where: { userId } })).toBe(0);
+    expect(await actions()).toContain('ADMIN_ROLE_REVOKED');
+    await expect(revokeAdminRole({ userId: 'admin-1' })).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it('revoking the Maintainer role removes it and ends sessions', async () => {
