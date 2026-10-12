@@ -107,7 +107,7 @@ This starts Next.js on port 3000 using the production build. It does not configu
 
 ## Production deployment
 
-**Production is not ready to launch yet.** The Administrator account-management page (the read-only audit-log page exists), an operational no-other-Administrator recovery procedure, and the organization-approved helper and audit retention schedules remain outstanding. The production preflight deliberately fails until its account and retention requirements are met. Review [the living implementation plan](./docs/IMPLEMENTATION_PLAN.md), [docs/TDD.md](./docs/TDD.md), and [requirements.md](./requirements.md) before deployment.
+**Production is not ready to launch yet.** The Administrator account-management page (the read-only audit-log page exists), the organization's approval of the no-other-Administrator recovery procedure below, and the organization-approved helper and audit retention schedules remain outstanding. The production preflight deliberately fails until its account and retention requirements are met. Review [the living implementation plan](./docs/IMPLEMENTATION_PLAN.md), [docs/TDD.md](./docs/TDD.md), and [requirements.md](./requirements.md) before deployment.
 
 The repository does not include a production Compose/Kubernetes configuration. Use an operator-managed supported Linux host or container runtime and a separately managed PostgreSQL service. Do not use the development Compose file for production: it publishes database ports, includes unused Redis, and does not run the application.
 
@@ -168,3 +168,15 @@ The repository does not include a production Compose/Kubernetes configuration. U
    Configure health monitoring, log access, backups, and updates operationally. Do not place credentials, TOTP secrets, helper data, or personal information in routine logs.
 
 The preflight currently checks authentication configuration, the two verified Administrators, and the two retention approval flags. It does not replace migration review, database backup/restore testing, network/TLS hardening, policy approval, or the still-required no-Administrator recovery procedure.
+
+### Administrator recovery (no other verified Administrator available)
+
+Normally a different verified Administrator resets a locked-out Administrator in the account page. If none is available, an authorised operator with server and database-owner access runs the break-glass script. It is not reachable from the web app, and it never grants access by itself: it removes the TOTP factor, revokes all sessions, re-enables the account and sets a temporary password, so the Administrator must re-enrol TOTP before any protected access.
+
+```sh
+export RECOVER_ADMIN_PASSWORD='<new temporary password>'   # from the secret manager, never argv
+npm run auth:recover-admin -- --email admin@example.org --confirm
+unset RECOVER_ADMIN_PASSWORD
+```
+
+Share the temporary password out of band after verifying the person's identity, then have them sign in and re-enrol. Each run is audited as `ADMIN_RECOVERED` with no actor. The organization must approve who may run it and how identity is verified before production use (requirements §8).
