@@ -158,7 +158,7 @@ export default async function MaintainersPage({
                         {account.roles.includes('MAINTAINER') && !account.roles.includes('ADMIN') && !account.disabled && (
                           <form action={grantAdminRoleAction}>
                             <input name="userId" type="hidden" value={account.id} />
-                            <button className={buttonClass} type="submit">Make Administrator</button>
+                            <button className={buttonClass} type="submit">Grant Administrator role</button>
                           </form>
                         )}
                         {account.roles.includes('ADMIN') && account.roles.includes('MAINTAINER') && (
