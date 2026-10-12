@@ -123,6 +123,33 @@ RETENTION_DATABASE_URL='<privileged role>' npm run retention:run -- --kind audit
 
 The inactive period counts from the moment a helper is set inactive (reactivation resets it). Each purged helper is recorded as a minimal `HELPER_PURGED` audit event (id only).
 
+### Scheduling
+
+Run the job unattended only after the organization has approved the periods. Keep secrets in a root-only environment file (here `/etc/helper-manager/retention.env`, containing `DATABASE_URL` and, for the audit log, `RETENTION_DATABASE_URL`) and review the dry-run output before enabling `--confirm`.
+
+systemd (`/etc/systemd/system/helper-retention.service` and `helper-retention.timer`):
+
+```ini
+# helper-retention.service
+[Service]
+Type=oneshot
+User=helper-manager
+WorkingDirectory=/opt/helper-manager
+EnvironmentFile=/etc/helper-manager/retention.env
+ExecStart=/usr/bin/npm run retention:run -- --kind inactive-helper --confirm
+ExecStart=/usr/bin/npm run retention:run -- --kind audit-log --confirm
+
+# helper-retention.timer
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+Enable with `systemctl enable --now helper-retention.timer`. With cron, load the same environment file in the job and run the same commands from the application directory. The job exits non-zero on failure (including a missing approved schedule), so monitor the unit or cron mail; every run writes a `RETENTION_RUN` audit event.
+
 ## Production deployment
 
 **Production is not ready to launch yet.** The Administrator account-management page (the read-only audit-log page exists), the organization's approval of the no-other-Administrator recovery procedure below, and the organization-approved helper and audit retention schedules remain outstanding. The production preflight deliberately fails until its account and retention requirements are met. Review [the living implementation plan](./docs/IMPLEMENTATION_PLAN.md), [docs/TDD.md](./docs/TDD.md), and [requirements.md](./requirements.md) before deployment.
