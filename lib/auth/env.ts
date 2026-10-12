@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import { z } from 'zod';
 
 const authEnvSchema = z.object({
@@ -18,4 +19,18 @@ export function loadAuthEnv(source: Record<string, string | undefined> = process
     throw new Error('Invalid authentication configuration: BETTER_AUTH_URL must use HTTPS in production');
   }
   return result.data;
+}
+
+/** Comma-separated proxy IPs/CIDRs from TRUSTED_PROXIES; undefined when unset. */
+export function parseTrustedProxies(source: Record<string, string | undefined> = process.env): string[] | undefined {
+  const entries = (source.TRUSTED_PROXIES ?? '').split(',').map((entry) => entry.trim()).filter(Boolean);
+  if (entries.length === 0) return undefined;
+  const valid = (entry: string) => {
+    const [address, prefix, ...rest] = entry.split('/');
+    const version = isIP(address);
+    if (!version || rest.length > 0) return false;
+    return prefix === undefined || (/^\d{1,3}$/.test(prefix) && Number(prefix) <= (version === 4 ? 32 : 128));
+  };
+  if (!entries.every(valid)) throw new Error('Invalid authentication configuration: TRUSTED_PROXIES');
+  return entries;
 }

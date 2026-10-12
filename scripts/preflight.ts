@@ -11,6 +11,10 @@ async function main() {
     failures.push((error as Error).message);
   }
 
+  if (!process.env.TRUSTED_PROXIES?.trim()) {
+    failures.push('TRUSTED_PROXIES is not set; sign-in rate limiting could be bypassed with a spoofed X-Forwarded-For header.');
+  }
+
   const admins = await prisma.authUser.count({
     where: {
       disabled: false,

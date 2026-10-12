@@ -137,6 +137,7 @@ The repository does not include a production Compose/Kubernetes configuration. U
    - `DATABASE_URL`
    - `BETTER_AUTH_SECRET` (at least 32 random characters; protect it as a credential)
    - `BETTER_AUTH_URL` (the public `https://` origin)
+   - `TRUSTED_PROXIES`: comma-separated IPs/CIDRs of your reverse proxy (the actual proxy addresses, not a broad range that includes clients). Rate limiting derives the client IP from `X-Forwarded-For` by skipping these hops. The proxy must overwrite client-supplied forwarding headers, and the application port must not be reachable except through the proxy. The preflight fails while this is unset.
    - Optional `RETENTION_DATABASE_URL`: a privileged role used only by the audit-log retention job (the application role cannot delete audit events).
 4. Deploy the reviewed application revision and install locked dependencies:
 

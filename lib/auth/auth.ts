@@ -4,7 +4,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { twoFactor } from 'better-auth/plugins';
 import prisma from '@/lib/db';
 import { recordAuditEvent, type AuditAction } from './audit';
-import { loadAuthEnv } from './env';
+import { loadAuthEnv, parseTrustedProxies } from './env';
 import {
   ENROLLMENT_WINDOW_SECONDS,
   MAX_PASSWORD_LENGTH,
@@ -90,6 +90,7 @@ function createAuth() {
     },
 
     advanced: {
+      ipAddress: { trustedProxies: parseTrustedProxies() },
       useSecureCookies: production,
       defaultCookieAttributes: { httpOnly: true, sameSite: 'lax', path: '/' },
     },

@@ -97,3 +97,13 @@ describe('account administration inputs', () => {
     expect(() => assertNotSelf({ userId: 'a' }, 'b')).not.toThrow();
   });
 });
+
+describe('trusted proxy configuration', () => {
+  it('parses valid IPs and CIDRs, ignores unset, and rejects junk', async () => {
+    const { parseTrustedProxies } = await import('@/lib/auth/env');
+    expect(parseTrustedProxies({})).toBeUndefined();
+    expect(parseTrustedProxies({ TRUSTED_PROXIES: ' 10.0.0.1, 2001:db8::/32 ' })).toEqual(['10.0.0.1', '2001:db8::/32']);
+    expect(() => parseTrustedProxies({ TRUSTED_PROXIES: 'nope' })).toThrow(/TRUSTED_PROXIES/);
+    expect(() => parseTrustedProxies({ TRUSTED_PROXIES: '10.0.0.0/33' })).toThrow();
+  });
+});
