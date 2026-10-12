@@ -134,6 +134,14 @@ The repository does not include a production Compose/Kubernetes configuration. U
    npx prisma migrate deploy
    ```
 
+   Then create or refresh the least-privilege runtime role (after every migration that adds tables) and point the application's `DATABASE_URL` at it; migrations keep using the owner role. The role cannot update, delete or truncate `audit_events`, and cannot read migration history or create objects:
+
+   ```sh
+   sed -e "s/__APP_ROLE__/helper_manager_app/" -e "s/__APP_PASSWORD__/<secret>/" scripts/sql/app-role.sql | psql "$OWNER_DATABASE_URL"
+   ```
+
+   The audit retention job (once the schedule is approved) must run under a separate privileged role and delete inside a transaction that first runs `SET LOCAL app.audit_retention = 'on'`.
+
    Never use `prisma migrate dev` or `prisma db push` against production.
 6. Bootstrap Administrators using the controlled script and a password supplied only through the protected environment. Run it once per Administrator, using unique credentials:
 
