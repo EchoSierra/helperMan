@@ -1,25 +1,13 @@
-import { createHmac } from 'node:crypto';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { hashPassword } from 'better-auth/crypto';
 
 import prisma from '@/lib/db';
 import { clearAudit } from './db';
+import { totpFromBase32 as totp } from './totp';
 import { getAuth } from '@/lib/auth/auth';
 
 const PASSWORD = 'correct horse battery';
 const ORIGIN = 'http://localhost:3000';
-
-const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-function totp(secret: string): string {
-  let bits = '';
-  for (const c of secret.toUpperCase()) bits += BASE32.indexOf(c).toString(2).padStart(5, '0');
-  const key = Buffer.from(bits.match(/.{8}/g)!.map((b) => parseInt(b, 2)));
-  const counter = Buffer.alloc(8);
-  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30000)));
-  const h = createHmac('sha1', key).update(counter).digest();
-  const o = h[h.length - 1] & 0xf;
-  return String((h.readUInt32BE(o) & 0x7fffffff) % 1_000_000).padStart(6, '0');
-}
 
 const actions = async () =>
   (await prisma.auditEvent.findMany({ orderBy: { occurredAt: 'asc' }, select: { action: true, actorId: true } }));
