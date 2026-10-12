@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import SignOutButton from './sign-out-button';
 import { getAccessContext } from '@/lib/auth/guards';
-import { canAccessHelperData } from '@/lib/auth/policy';
+import { canAccessHelperData, canManageAccounts } from '@/lib/auth/policy';
 
 export default async function Home() {
   const access = await getAccessContext();
@@ -35,11 +35,18 @@ export default async function Home() {
             <Link className="rounded bg-black px-4 py-2 text-white" href="/helpers">Helper directory</Link>
             <Link className="rounded border border-gray-400 px-4 py-2" href="/reports/qualification-expiry">Qualification expiry</Link>
           </nav>
-        ) : (
+        ) : null}
+        {canManageAccounts(access) && (
+          <nav aria-label="Administration" className="mt-6 flex flex-wrap gap-3">
+            <Link className="rounded bg-black px-4 py-2 text-white" href="/admin/maintainers">Account management</Link>
+          </nav>
+        )}
+        {!canAccessHelperData(access) && (
           <p className="mt-3 max-w-2xl text-gray-700">
             Sign-in, multi-factor authentication, session expiry, and role checks are active. Helper data requires the Maintainer role.
           </p>
         )}
+        <p className="mt-8 text-sm"><Link className="underline" href="/account/password">Change password</Link></p>
       </section>
     </main>
   );
