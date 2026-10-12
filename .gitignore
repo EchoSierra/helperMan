@@ -38,3 +38,8 @@ Icon?
 # Local spreadsheet data
 *.csv
 *.xlsx
+
+# Playwright
+/.next-e2e/
+/test-results/
+/playwright-report/

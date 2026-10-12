@@ -12,7 +12,8 @@
     "auth:bootstrap-admin": "tsx scripts/bootstrap-admin.ts",
     "auth:recover-admin": "tsx scripts/recover-admin.ts",
     "auth:preflight": "tsx scripts/preflight.ts",
-    "test:integration": "vitest run --config vitest.integration.config.mts"
+    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -29,6 +30,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
