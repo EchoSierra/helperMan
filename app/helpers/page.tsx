@@ -13,7 +13,10 @@ export default async function HelpersPage() {
           <h1 className="text-3xl font-semibold">Helpers</h1>
           <p className="mt-1 text-sm text-gray-600">Search and manage helper profiles and qualifications.</p>
         </div>
-        <Link className="rounded bg-black px-4 py-2 text-white" href="/helpers/new">Add helper</Link>
+        <nav className="flex flex-wrap items-center gap-3">
+          <Link className="text-sm underline" href="/audit">Audit log</Link>
+          <Link className="rounded bg-black px-4 py-2 text-white" href="/helpers/new">Add helper</Link>
+        </nav>
       </header>
       <HelperDirectory initial={{ ...initial, search: '' }} />
       <Link className="mt-8 inline-block underline" href="/">Back to workspace</Link>
