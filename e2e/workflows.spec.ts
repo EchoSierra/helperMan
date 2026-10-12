@@ -154,9 +154,9 @@ test('Administrator records retention schedules', async ({ page }) => {
   await hydrated(page);
   await expect(page.getByText('Not approved yet.')).toHaveCount(2);
   await page.getByLabel('Period (days) for Inactive helper records').fill('365');
-  await page.getByLabel('Decision reference for Inactive helper records').fill('DPO-2026-04');
+  await page.getByLabel('Approval reference for Inactive helper records').fill('DPO-2026-04');
   await page.getByLabel('The organization has formally approved this schedule.').first().check();
   await page.getByRole('button', { name: 'Save Inactive helper records schedule' }).click();
   await expect(page.getByText('Schedule saved.')).toBeVisible();
-  await expect(page.getByText(/Approved: 365 days · decision DPO-2026-04/)).toBeVisible();
+  await expect(page.getByText(/Approved: 365 days · approval DPO-2026-04/)).toBeVisible();
 });

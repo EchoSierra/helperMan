@@ -46,7 +46,7 @@ export default async function RetentionPage({
             <p className="mt-1 text-sm text-gray-700">{LABELS[kind].help}</p>
             <p className="mt-2 text-sm">
               {policy
-                ? `Approved: ${policy.periodDays} days · decision ${policy.decisionReference} · recorded ${policy.approvedAt.toISOString().slice(0, 10)}`
+                ? `Approved: ${policy.periodDays} days · approval ${policy.decisionReference} · recorded ${policy.approvedAt.toISOString().slice(0, 10)}`
                 : 'Not approved yet.'}
             </p>
             <form action={setRetentionPolicyAction} className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -56,8 +56,9 @@ export default async function RetentionPage({
                 <input className="w-full rounded border border-gray-300 px-3 py-2" defaultValue={policy?.periodDays} max={36500} min={1} name="periodDays" required type="number" />
               </label>
               <label className="space-y-1 text-sm">
-                <span className="block font-medium">Decision reference for {LABELS[kind].title}</span>
+                <span className="block font-medium">Approval reference for {LABELS[kind].title}</span>
                 <input className="w-full rounded border border-gray-300 px-3 py-2" defaultValue={policy?.decisionReference} maxLength={200} name="decisionReference" required />
+                <span className="block text-xs text-gray-600">Where the approval is documented, e.g. meeting minutes, ticket or policy number. Not checked by the app.</span>
               </label>
               <label className="flex items-center gap-2 text-sm sm:col-span-2">
                 <input name="confirmApproved" required type="checkbox" />
