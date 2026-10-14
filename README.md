@@ -174,7 +174,7 @@ The repository does not include a production Compose/Kubernetes configuration. U
    npm run build
    ```
 
-5. Back up the target database, confirm its identity and migration state, then apply migrations as a controlled release step:
+5. Back up the target database, confirm its identity and migration state, inventory legacy rows, and approve a lossless mapping for legacy `User` data before applying migrations as a controlled release step. The repository migrations leave legacy tables and rows untouched; do not infer whether a legacy row is a helper or an operator account.
 
    ```sh
    npx prisma migrate deploy
@@ -198,7 +198,7 @@ The repository does not include a production Compose/Kubernetes configuration. U
    ```
 
    Each Administrator must sign in and complete TOTP enrollment. Provision and verify at least two enabled Administrators with verified TOTP before protected production use.
-7. Once the approved retention flags are set and the two verified Administrators are in place, run the readiness preflight:
+7. Once both approved retention schedules are recorded and the two verified Administrators are in place, run the readiness preflight:
 
    ```sh
    npm run auth:preflight
@@ -213,7 +213,7 @@ The repository does not include a production Compose/Kubernetes configuration. U
 
    Configure health monitoring, log access, backups, and updates operationally. Do not place credentials, TOTP secrets, helper data, or personal information in routine logs.
 
-The preflight currently checks authentication configuration, the two verified Administrators, and the two retention approval flags. It does not replace migration review, database backup/restore testing, network/TLS hardening, policy approval, or the still-required no-Administrator recovery procedure.
+The preflight currently checks authentication configuration, including trusted proxy configuration, the two verified Administrators, and both recorded retention schedules. It does not replace migration review, database backup/restore testing, network/TLS hardening, policy approval, or the still-required no-Administrator recovery procedure.
 
 ### Administrator recovery (no other verified Administrator available)
 

@@ -1,9 +1,9 @@
 # Helper Manager — Technical Design (First Delivery)
 
-**Status:** Authentication and the initial helper/qualification slice are implemented; the prepared migrations are not applied. Production and several first-delivery surfaces remain incomplete as noted below.
+**Status:** Authentication, helper/qualification management, Administrator account management, audit, retention, integration tests, and browser E2E are implemented. All five repository migrations are applied and current on the dev and test databases. Production migration remains pending target-database inventory, legacy-row mapping approval, review, and release execution.
 **Requirements source:** `requirements.md` (including its confirmed project constraints).
 **Engineering standards:** `DEVELOPMENT_STANDARDS.md`.
-**Repository baseline inspected:** Next.js App Router 16.4, React 19, TypeScript, Tailwind CSS 4, Prisma 6.19, PostgreSQL, Better Auth 1.7.x, and Vitest. Authentication, Maintainer helper/profile/qualification routes, and the qualification-expiry report are implemented; account-management and audit-log UI, database integration tests, and browser E2E remain outstanding.
+**Repository baseline inspected:** Next.js App Router 16.4, React 19, TypeScript, Tailwind CSS 4, Prisma 6.19, PostgreSQL, Better Auth 1.7.x, Vitest, and Playwright. Authentication, Maintainer helper/profile/qualification routes, the qualification-expiry report, Administrator account management, and the Maintainer-only audit view are implemented and tested.
 
 ## 1. Purpose and scope
 
@@ -15,7 +15,7 @@ PostgreSQL is the approved MVP database. MongoDB evaluation is parked and is not
 
 ## 2. Current repository evidence and implications
 
-- The App Router includes sign-in, TOTP enrollment/verification, a Maintainer-only helper directory/profile/qualification workflow, and the qualification-expiry report. Administrator account-management and audit-log pages are not implemented.
+- The App Router includes sign-in, TOTP enrollment/verification, a Maintainer-only helper directory/profile/qualification workflow, the qualification-expiry report, Administrator account management, and the Maintainer-only audit view.
 - The unreferenced legacy `actions/identity.ts` and `actions/qualifications.ts` services were removed because they returned or mutated legacy person/qualification rows without authorization, ownership checks, or audit events. New service boundaries are server-only, Maintainer-guarded, strictly validated, and audited.
 - `schema/validations.ts` accepts old/new values and IP addresses for audit events, and its event enum omits MFA, enrollment, recovery, account disablement, and account deletion events. This is inconsistent with the approved minimal-audit requirement.
 - `prisma/schema.prisma` and the initial migration define a `User` as both a person record and an account (`firstName`, `lastName`, email, phone, address, status, and a single `role`). `Identity` is a separate one-to-one record with unrestricted JSON. This does not cleanly represent helpers without login accounts, privileged accounts without helper profiles, or additive Administrator+Maintainer roles.
@@ -23,7 +23,7 @@ PostgreSQL is the approved MVP database. MongoDB evaluation is parked and is not
 - Roles are represented twice: a singular `User.role` enum and an implicit `User.roles` many-to-many relation to `Role`. `Permission` is separately connected directly to users and optionally to a role. These overlapping mechanisms have no single clear source of authorization truth.
 - `AuditLog` stores `oldValue`, `newValue`, and `ipAddress`, all of which are outside or contrary to the approved minimal event shape. Its actor foreign key uses `ON DELETE SET NULL`, which can erase the actor reference when an account is removed.
 - `UserStatus` in `app/types/index.ts` lists three values, while Prisma's shared `Status` enum also contains equipment states. Several TypeScript data types allow dynamic `any` fields.
-- The initial migration, `prisma/migrations/20261012054059_init/migration.sql`, creates the legacy schema above. The additive authentication migration is generated and the helper-registry migration is authored; neither has been applied. `package.json` includes auth bootstrap/preflight scripts, Vitest, Better Auth, and build/lint/typecheck scripts. Focused policy, schema, and expiry-date unit tests exist; database integration and browser E2E tests do not.
+- The initial migration, `prisma/migrations/20261012054059_init/migration.sql`, creates the legacy schema above. The repository contains five forward migrations; all five are applied and current on the dev and test databases. Integration and browser E2E suites are present. Legacy rows are not classified or transformed by these migrations.
 - `docker-compose.yml` supplies PostgreSQL 15 and Redis 7, but no application service. Redis is not used by the inspected application and is not needed by the proposed database-backed session design unless the eventual auth-library choice demonstrates a need.
 
 These are design findings from repository files, not a claim about the contents of any running database. Before migration, inventory actual data and decide how existing `User` rows are classified; do not assume that every current user is a helper or an account.
@@ -82,7 +82,7 @@ The additive Prisma schema now includes the first-delivery helper models. The he
 
 ### Migration direction
 
-The forward migrations follow the existing `init` migration. The generated auth migration adds operator authentication/audit tables; the authored `20261013100000_helper_registry` migration adds isolated helper tables. Neither migration has been applied. The helper migration:
+The forward migrations follow the existing `init` migration. The authentication migration adds operator authentication/audit tables; `20261013100000_helper_registry` adds isolated helper tables; later migrations add audit immutability and retention policy support. All five are applied and current on the dev and test databases. The helper migration:
 
 1. Create dedicated `helpers` and `helper_qualifications` tables with active status, fixed profile fields, date-only valid-through values, and timezone-aware timestamps.
 2. Require and index a qualification-to-helper foreign key; add indexes for directory ordering and valid-through queries.
@@ -90,7 +90,7 @@ The forward migrations follow the existing `init` migration. The generated auth 
 4. Do not drop dynamic profile/qualification JSON, extra qualification fields, or audit value/IP columns from legacy tables until their contents are inventoried and a reviewed data migration is approved.
 5. Separate account and helper lifecycle state. The helper foreign key cascades qualifications on a controlled retention deletion; minimal audit events have no foreign keys and remain.
 
-Before applying either generated migration, classify any existing `User` rows and map profile data only with an approved field mapping. Preserve a recoverable backup and rehearse migration/restore against synthetic or irreversibly masked data. Never rewrite a migration once it is shared or deployed; use a new forward migration for subsequent changes.
+Before applying these migrations to another target, confirm its identity and migration state, classify any existing `User` rows, and map profile data only with an approved field mapping. Preserve a recoverable backup and rehearse migration/restore against synthetic or irreversibly masked data. These migrations do not transform or delete legacy rows. Never rewrite a migration once it is shared or deployed; use a new forward migration for subsequent changes.
 
 ## 5. Authentication, sessions, and MFA
 
@@ -114,8 +114,8 @@ The first authentication increment is implemented. Better Auth provides email/pa
 - Audit: `audit_events` stores actor, action, target type/id and UTC time only.
 - Time: all comparisons and persisted timestamps are UTC (`timestamptz`); valid-through stays date-only.
 - Bootstrap: `npm run auth:bootstrap-admin -- --email ... --name ... --confirm` with `BOOTSTRAP_ADMIN_PASSWORD` in the environment; the account must enroll TOTP before any access. `npm run auth:preflight` fails until at least two enabled Administrators have verified TOTP and until both retention schedules are recorded in `retention_policies` by an Administrator after organizational approval. The retention job is `npm run retention:run` (dry run by default; `--confirm` deletes; audit-log deletion needs a privileged role via `RETENTION_DATABASE_URL` and the transaction-local `app.audit_retention` opt-in). `helpers.deactivatedAt` starts the inactive-helper clock.
-- Schema: new `auth_*` and `audit_events` tables (migration `20261012100000_auth_foundation`, generated but not applied). Legacy `User`/`Role`/`Permission`/`Identity`/`AuditLog` are untouched and unmapped.
-- Accepted deviations/residuals: Better Auth stores the session token in plaintext in the DB (signed cookie), not as a digest; rate limiting is in-memory (single node only); audit writes in auth hooks are not atomic with the auth operation and the table has no DB-level immutability; the bootstrap Administrator password is not force-rotated (no change-password route is exposed); no DB integration tests yet (migrations not applied in this increment); Playwright E2E not yet added.
+- Schema: new `auth_*`, helper, retention policy, and `audit_events` tables are defined by five migrations, applied and current on the dev and test databases. Legacy `User`/`Role`/`Permission`/`Identity`/`AuditLog` rows are untouched and unmapped pending inventory and approval.
+- Accepted deviations/residuals: Better Auth stores the session token in plaintext in the DB (signed cookie), not as a digest; rate limiting is in-memory (single node only); auth operations and their audit writes are not one atomic database transaction, although audit failures fail closed where required; the bootstrap Administrator password is not automatically forced to rotate, but can be changed at `/account/password`. Applying to another target still requires target-specific migration review, backup/restore readiness, and approved handling of legacy rows.
 
 At least two independently verified Administrator accounts with completed TOTP must be provisioned and checked by a production-readiness preflight before protected production use. Bootstrap them through a controlled operator procedure; do not seed a shared password or MFA secret in source, fixtures, or migration SQL.
 
@@ -174,7 +174,7 @@ Minimum deployment plan:
 1. Run the Next.js production server on a supported Node.js runtime, behind a TLS-terminating reverse proxy. Restrict PostgreSQL to the private application network; do not expose the database publicly. Keep production credentials, session/TOTP encryption keys, and database secrets outside source control with restrictive file/secret permissions.
 2. Use PostgreSQL with authenticated least-privilege application credentials, encrypted backups, and tested restore procedures. Keep app and database clocks synchronized.
 3. Apply schema changes through reviewed Prisma migrations (`prisma migrate deploy` in release), not `db push` against production. Back up before migrations and rehearse upgrade/rollback/restore against masked data.
-4. Keep non-production datasets synthetic or irreversibly masked. Add a deployment preflight that verifies migrations are current, required secrets/configuration exist, the two retention approval flags are true after external approval, and at least two verified Admin+TOTP accounts exist before enabling protected production use.
+4. Keep non-production datasets synthetic or irreversibly masked. Before release, verify migrations are current, required secrets/configuration exist, both retention schedules are recorded after external approval, and at least two verified Admin+TOTP accounts exist before enabling protected production use. The application preflight checks auth configuration, the two verified Administrators, and the recorded retention schedules; migration review remains a deployment responsibility.
 5. Bootstrap the initial Administrators through a controlled, non-reusable credential setup. Require password change and TOTP verification before they can use protected operations. Document Administrator-assisted reset and the no-Admin recovery procedure.
 6. Establish operational monitoring for application/database availability and failed migration/auth health without capturing PII, credentials, TOTP values, or record contents. Keep audit-log access Maintainer-gated.
 
@@ -190,7 +190,8 @@ The following items must be resolved before their dependent implementation or pr
 | No-other-Admin recovery | The approved assisted reset requires another verified Administrator; there is no fallback if all Administrators are unavailable. | The operator script `auth:recover-admin` implements a procedure that preserves mandatory TOTP re-enrollment; production use stays blocked until the organization approves it (who may run it, identity verification). |
 | Two verified Admin+TOTP accounts | Required before protected production use. | Provision via bootstrap; enforced by `npm run auth:preflight`. **Operational blocker.** |
 | Existing-row classification/mapping | Legacy schema conflates accounts and people; no data inspected. | Inventory data and approve a lossless map before any migration of legacy rows. |
-| Applying migrations | The auth migration is generated and the helper-registry migration is authored; both are schema-validated but unapplied. | Inventory the target database, review both migrations, and apply only through the normal deployment process. |
+| Applying migrations to dev/test | All five repository migrations are applied and current on both databases. | Resolved; verified with `prisma migrate status` on each database. |
+| Applying migrations to another target | No target database has been identified or inventoried; legacy `User` rows remain unmapped. | Confirm target identity, inventory and approve legacy-row mapping, then review, back up, and apply through the normal deployment process. |
 
 Resolved: fixed helper fields (first/last name required; email/phone/address optional; active by default), directory search (case-insensitive partial first/last-name match), inclusion and visible marking of inactive-helper qualifications in the expiry report, authentication library (Better Auth), organization time zone (UTC), session/credential policy (8 h absolute, 12+ character passwords, in-memory rate limits and TOTP lockout), meaning of "manage permissions" (Maintainer role assignment/revocation), and unit test framework (Vitest; Playwright later).
 
