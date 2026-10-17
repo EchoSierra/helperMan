@@ -227,14 +227,16 @@ model AuthRoleAssignment {
   @@map("auth_role_assignments")
 }
 
-/// Minimal accountability trail: actor, action, target, time. No foreign keys,
-/// so history survives account deletion. Never add values, IPs, or user agents.
+/// Minimal accountability trail: actor, action, target, time, and explicitly
+/// approved qualification-validity changes. No foreign keys, so history survives deletions.
 model AuditEvent {
   id         String   @id @default(cuid())
   actorId    String?
   action     String
   targetType String
   targetId   String?
+  oldValue   String?
+  newValue   String?
   occurredAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([occurredAt])
@@ -244,39 +246,122 @@ model AuditEvent {
 }
 
 model Helper {
-  id        String   @id @default(cuid())
-  firstName String
-  lastName  String
-  email     String?
-  phone     String?
-  address   String?
-  active    Boolean  @default(true)
+  id            String    @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String?
+  address       String?
+  active        Boolean   @default(true)
   // Set when the helper becomes inactive; the retention period counts from here.
   deactivatedAt DateTime? @db.Timestamptz(3)
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
 
-  qualifications HelperQualification[]
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
 
+  qualifications       HelperQualification[]
+  equipmentAssignments EquipmentAssignment[]
+
+  @@index([organizationId])
   @@index([firstName, lastName, id])
   @@index([lastName, firstName, id])
   @@index([deactivatedAt])
   @@map("helpers")
 }
 
+/// Reusable list of organizations helpers are registered for. Retired entries
+/// stay on existing helpers but cannot be newly assigned.
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  helpers Helper[]
+
+  @@map("organizations")
+}
+
 model HelperQualification {
   id           String    @id @default(cuid())
   helperId     String
-  title        String
+  definitionId String
   validThrough DateTime? @db.Date
   createdAt    DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
 
-  helper Helper @relation(fields: [helperId], references: [id], onDelete: Cascade)
+  helper     Helper                  @relation(fields: [helperId], references: [id], onDelete: Cascade)
+  definition QualificationDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict)
 
-  @@index([helperId])
+  @@unique([helperId, definitionId])
+  @@index([definitionId])
   @@index([validThrough])
   @@map("helper_qualifications")
+}
+
+model QualificationDefinition {
+  id        String   @id @default(cuid())
+  name      String
+  category  String?
+  retired   Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  assignments HelperQualification[]
+
+  @@map("qualification_definitions")
+}
+
+model EquipmentType {
+  id        String   @id @default(cuid())
+  name      String
+  retired   Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  items EquipmentItem[]
+
+  @@map("equipment_types")
+}
+
+enum EquipmentStatus {
+  AVAILABLE
+  ASSIGNED
+  IN_REPAIR
+  RETIRED
+}
+
+model EquipmentItem {
+  id              String          @id @default(cuid())
+  equipmentTypeId String
+  assetLabel      String?
+  status          EquipmentStatus @default(AVAILABLE)
+  createdAt       DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime        @updatedAt @db.Timestamptz(3)
+
+  equipmentType EquipmentType         @relation(fields: [equipmentTypeId], references: [id], onDelete: Restrict)
+  assignments   EquipmentAssignment[]
+
+  @@index([equipmentTypeId, status])
+  @@map("equipment_items")
+}
+
+model EquipmentAssignment {
+  id              String    @id @default(cuid())
+  equipmentItemId String
+  helperId        String
+  assignedAt      DateTime  @default(now()) @db.Timestamptz(3)
+  returnedAt      DateTime? @db.Timestamptz(3)
+
+  equipmentItem EquipmentItem @relation(fields: [equipmentItemId], references: [id], onDelete: Restrict)
+  helper        Helper        @relation(fields: [helperId], references: [id], onDelete: Cascade)
+
+  @@index([helperId, returnedAt])
+  @@index([equipmentItemId, returnedAt])
+  @@map("equipment_assignments")
 }
 
 enum RetentionKind {
