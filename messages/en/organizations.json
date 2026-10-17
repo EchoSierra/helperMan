@@ -1,0 +1,28 @@
+{
+  "page": {
+    "backToWorkspace": "Back to workspace",
+    "title": "Organizations",
+    "description": "Reusable list of organizations helpers are registered for. Retired organizations stay on existing helpers but cannot be chosen for new assignments.",
+    "listAriaLabel": "Organization list",
+    "empty": "No organizations yet."
+  },
+  "create": {
+    "name": "New organization",
+    "submit": "Add organization",
+    "pending": "Adding…"
+  },
+  "edit": {
+    "name": "Name",
+    "status": "Status",
+    "active": "Active",
+    "retired": "Retired",
+    "submit": "Save",
+    "pending": "Saving…"
+  },
+  "messages": {
+    "invalidName": "Enter a name of up to 200 characters.",
+    "duplicate": "An organization with this name already exists.",
+    "notFound": "This organization no longer exists.",
+    "saved": "Saved."
+  }
+}

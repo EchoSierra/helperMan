@@ -1,0 +1,36 @@
+{
+  "page": {
+    "back": "Zurück zu den Helfern",
+    "activeHelper": "Aktiver Helfer",
+    "inactiveHelper": "Inaktiver Helfer",
+    "reference": "Referenz {id}",
+    "editProfile": "Profil bearbeiten"
+  },
+  "sections": {
+    "profile": {
+      "title": "Profil",
+      "organization": "Organisation",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "address": "Adresse",
+      "notAssigned": "Nicht zugewiesen",
+      "notProvided": "Nicht angegeben"
+    },
+    "qualifications": {
+      "title": "Qualifikationen",
+      "empty": "Keine Qualifikationen erfasst.",
+      "record": "Datensatz {id}"
+    },
+    "equipment": {
+      "title": "Zugewiesene Ausrüstung",
+      "manage": "Ausrüstung verwalten",
+      "inactive": "Einem inaktiven Helfer kann keine Ausrüstung zugewiesen werden.",
+      "addTypeFirstLink": "Fügen Sie zuerst einen Ausrüstungstyp hinzu.",
+      "empty": "Derzeit ist keine Ausrüstung zugewiesen.",
+      "removeFromHelper": "Vom Helfer entfernen"
+    },
+    "reports": {
+      "qualificationExpiry": "Bericht zu ablaufenden Qualifikationen"
+    }
+  }
+}

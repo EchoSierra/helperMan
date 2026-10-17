@@ -1,0 +1,96 @@
+{
+  "maintainers": {
+    "back": "Zurück",
+    "title": "Kontoverwaltung",
+    "messages": {
+      "maintainerGranted": "Die Rolle Bearbeiter wurde vergeben. Der Benutzer muss sich nicht erneut anmelden.",
+      "maintainerRevoked": "Die Rolle Bearbeiter wurde entzogen und alle Sitzungen wurden widerrufen.",
+      "adminGranted": "Die Rolle Administrator wurde vergeben. Der Benutzer muss sich nicht erneut anmelden.",
+      "adminRevoked": "Die Rolle Administrator wurde entzogen und alle Sitzungen wurden widerrufen.",
+      "deleted": "Das Bearbeiterkonto wurde gelöscht.",
+      "created": "Bearbeiter wurde angelegt. Geben Sie das Initialpasswort über einen separaten sicheren Kanal weiter.",
+      "disabled": "Das Konto wurde deaktiviert und seine Sitzungen wurden widerrufen.",
+      "enabled": "Das Konto wurde aktiviert.",
+      "sessionsRevoked": "Sitzungen wurden widerrufen.",
+      "totpReset": "Der Authentifikator wurde zurückgesetzt. Der Benutzer muss ihn bei der nächsten Anmeldung erneut einrichten.",
+      "passwordReset": "Das Passwort wurde zurückgesetzt und alle Sitzungen wurden widerrufen."
+    },
+    "errors": {
+      "invalid": "Die Eingabe ist ungültig. Prüfen Sie die Felder und versuchen Sie es erneut.",
+      "denied": "Diese Aktion ist für dieses Konto nicht erlaubt."
+    },
+    "create": {
+      "title": "Bearbeiter anlegen",
+      "name": "Name",
+      "email": "E-Mail",
+      "password": "Initialpasswort",
+      "submit": "Bearbeiter anlegen"
+    },
+    "accounts": {
+      "title": "Konten",
+      "columns": {
+        "account": "Konto",
+        "roles": "Rollen",
+        "status": "Status",
+        "actions": "Aktionen"
+      },
+      "status": {
+        "active": "Aktiv",
+        "disabled": "Deaktiviert"
+      },
+      "mfa": {
+        "enrolled": "Authentifikator eingerichtet",
+        "pending": "Authentifikator ausstehend"
+      },
+      "actions": {
+        "grantMaintainer": "Rolle Bearbeiter vergeben",
+        "self": "Das sind Sie",
+        "enable": "Aktivieren",
+        "disable": "Deaktivieren",
+        "revokeSessions": "Sitzungen widerrufen",
+        "resetAuthenticator": "Authentifikator zurücksetzen",
+        "newPasswordAria": "Neues Passwort für {email}",
+        "newPasswordPlaceholder": "Neues Passwort",
+        "resetPassword": "Passwort zurücksetzen",
+        "revokeMaintainer": "Rolle Bearbeiter entziehen",
+        "grantAdmin": "Rolle Administrator vergeben",
+        "revokeAdmin": "Rolle Administrator entziehen",
+        "deleteSummary": "Konto löschen…",
+        "deleteButton": "{email} dauerhaft löschen"
+      }
+    },
+    "roles": {
+      "ADMIN": "Administrator",
+      "MAINTAINER": "Bearbeiter"
+    }
+  },
+  "retention": {
+    "back": "Zurück",
+    "title": "Aufbewahrungsfristen",
+    "description": "Dokumentieren Sie die Fristen, die die Organisation formell genehmigt hat. Es gibt keine Standardwerte: Solange keine Frist genehmigt ist, wird nichts gelöscht und der Produktiveinsatz bleibt blockiert. Daten werden nur gelöscht, wenn ein Bediener den Aufbewahrungslauf startet.",
+    "saved": "Frist gespeichert.",
+    "errors": {
+      "denied": "Diese Aktion ist für dieses Konto nicht erlaubt.",
+      "invalid": "Die Eingabe ist ungültig. Prüfen Sie die Felder und versuchen Sie es erneut."
+    },
+    "kinds": {
+      "INACTIVE_HELPER": {
+        "title": "Datensätze inaktiver Helfer",
+        "help": "Anzahl der Tage, nachdem ein Helfer inaktiv wird, bis der Helfer und seine Qualifikationen dauerhaft gelöscht werden."
+      },
+      "AUDIT_LOG": {
+        "title": "Audit-Protokoll",
+        "help": "Anzahl der Tage, nach denen Audit-Ereignisse dauerhaft gelöscht werden."
+      }
+    },
+    "approved": "Genehmigt: {days} Tage · Freigabe {reference} · erfasst am {date}",
+    "notApproved": "Noch nicht genehmigt.",
+    "form": {
+      "periodLabel": "Frist (Tage) für {title}",
+      "referenceLabel": "Freigabereferenz für {title}",
+      "referenceHelp": "Wo die Freigabe dokumentiert ist, z. B. in Sitzungsnotizen, Tickets oder einer Richtliniennummer. Wird von der App nicht geprüft.",
+      "confirm": "Die Organisation hat diese Frist formell genehmigt.",
+      "submit": "{title}-Frist speichern"
+    }
+  }
+}

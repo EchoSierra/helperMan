@@ -1,0 +1,36 @@
+{
+  "page": {
+    "back": "Back to helpers",
+    "activeHelper": "Active helper",
+    "inactiveHelper": "Inactive helper",
+    "reference": "Reference {id}",
+    "editProfile": "Edit profile"
+  },
+  "sections": {
+    "profile": {
+      "title": "Profile",
+      "organization": "Organization",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "notAssigned": "Not assigned",
+      "notProvided": "Not provided"
+    },
+    "qualifications": {
+      "title": "Qualifications",
+      "empty": "No qualifications recorded.",
+      "record": "Record {id}"
+    },
+    "equipment": {
+      "title": "Assigned equipment",
+      "manage": "Manage equipment",
+      "inactive": "Equipment cannot be assigned to an inactive helper.",
+      "addTypeFirstLink": "Add an equipment type first.",
+      "empty": "No equipment currently assigned.",
+      "removeFromHelper": "Remove from helper"
+    },
+    "reports": {
+      "qualificationExpiry": "Qualification expiry report"
+    }
+  }
+}

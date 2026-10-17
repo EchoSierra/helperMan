@@ -1,0 +1,13 @@
+{
+  "RecordNotFoundError": "Der angeforderte Datensatz existiert nicht mehr.",
+  "InvalidCursorError": "Der Ergebnis-Cursor ist nicht mehr gültig.",
+  "InvalidOrganizationError": "Die gewählte Organisation ist nicht verfügbar.",
+  "DuplicateOrganizationError": "Eine Organisation mit diesem Namen existiert bereits.",
+  "DuplicateMasterDataError": "Ein Datensatz mit diesem Namen existiert bereits.",
+  "InvalidAssignmentError": "Der gewählte Datensatz kann in seinem aktuellen Zustand nicht zugewiesen werden.",
+  "InvalidStatusTransitionError": "Die gewünschte Statusänderung ist nicht erlaubt.",
+  "DuplicateQualificationAssignmentError": "Diese Qualifikation ist dem Helfer bereits zugewiesen.",
+  "UnauthenticatedError": "Anmeldung erforderlich.",
+  "MfaEnrollmentRequiredError": "Die TOTP-Einrichtung muss zuerst abgeschlossen werden.",
+  "ForbiddenError": "Zugriff verweigert."
+}

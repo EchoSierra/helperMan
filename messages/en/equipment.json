@@ -1,0 +1,94 @@
+{
+  "page": {
+    "back": "Back to workspace",
+    "title": "Equipment",
+    "description": "Manage reusable equipment types and individually tracked items. Retired items cannot be reassigned.",
+    "typesAriaLabel": "Equipment types",
+    "emptyTypes": "No equipment types yet.",
+    "typeRetired": "This type is retired; new items cannot be added.",
+    "emptyItems": "No individual items yet."
+  },
+  "common": {
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel"
+  },
+  "typeStatus": {
+    "active": "Active",
+    "retired": "Retired"
+  },
+  "equipmentStatus": {
+    "AVAILABLE": "Available",
+    "ASSIGNED": "Assigned",
+    "IN_REPAIR": "In repair",
+    "RETIRED": "Retired"
+  },
+  "forms": {
+    "createType": {
+      "label": "New equipment type",
+      "submit": "Add type",
+      "pending": "Adding…"
+    },
+    "editType": {
+      "nameLabel": "Equipment type",
+      "statusLabel": "Status"
+    },
+    "deleteType": {
+      "open": "Delete type…",
+      "warning": "Warning: deleting “{name}” permanently removes the type, all of its individual items, and all of their assignments and history. This cannot be undone.",
+      "submit": "Delete permanently",
+      "pending": "Deleting…"
+    },
+    "createItem": {
+      "assetLabel": "Asset label (optional)",
+      "submit": "Add item",
+      "pending": "Adding…"
+    },
+    "assignExisting": {
+      "helperLabel": "Assign to helper",
+      "helperPlaceholder": "Choose helper",
+      "submit": "Assign",
+      "pending": "Assigning…"
+    },
+    "assignToHelper": {
+      "itemLabel": "Available equipment",
+      "itemPlaceholder": "Choose equipment",
+      "submit": "Assign equipment",
+      "pending": "Assigning…"
+    },
+    "assignNew": {
+      "typeLabel": "Equipment type",
+      "typePlaceholder": "Choose type",
+      "assetLabel": "Asset label (optional)",
+      "submit": "Assign new item",
+      "pending": "Assigning…"
+    },
+    "returnItem": {
+      "submit": "Return to available",
+      "pending": "Returning…"
+    },
+    "changeStatus": {
+      "label": "Status",
+      "submit": "Save status",
+      "retiredLocked": "Retired items cannot be reactivated."
+    }
+  },
+  "item": {
+    "defaultName": "Equipment item",
+    "reference": "Item reference {id}",
+    "referenceFallback": "Item {id}",
+    "assignedTo": "Assigned to {name}",
+    "inconsistentAssignment": "This item has an inconsistent assignment record; contact an administrator."
+  },
+  "messages": {
+    "saved": "Saved.",
+    "validation": {
+      "typeName": "Enter a valid equipment type name.",
+      "assetLabel": "Enter a valid optional asset label.",
+      "helperRequired": "Choose a helper first.",
+      "itemRequired": "Choose an equipment item first.",
+      "newAssignment": "Choose an equipment type and enter a valid optional asset label.",
+      "statusRequired": "Choose a valid equipment status."
+    }
+  }
+}

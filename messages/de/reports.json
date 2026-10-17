@@ -1,0 +1,38 @@
+{
+  "page": {
+    "backToHelpers": "Zurück zu den Helfern",
+    "title": "Ablauf von Qualifikationen"
+  },
+  "report": {
+    "description": "Enthält abgelaufene Qualifikationen sowie solche, die bis {through} (UTC) gültig sind, für aktive und inaktive Helfer.",
+    "exportCsv": "CSV exportieren",
+    "empty": "Keine abgelaufenen oder bald ablaufenden Qualifikationen.",
+    "inactive": "Inaktiv",
+    "reference": "Referenz {helperId}",
+    "loadMore": "Mehr laden",
+    "loading": "Wird geladen…",
+    "table": {
+      "helper": "Helfer",
+      "qualification": "Qualifikation",
+      "validThrough": "Gültig bis",
+      "status": "Status"
+    }
+  },
+  "statusLabels": {
+    "Expired": "Abgelaufen",
+    "Expiring": "Läuft bald ab"
+  },
+  "messages": {
+    "pageLoadError": "Die Berichtsseite konnte nicht geladen werden. Aktualisieren Sie die Seite und versuchen Sie es erneut.",
+    "reportChanged": "Der Bericht hat sich geändert. Aktualisieren Sie die Seite, um fortzufahren."
+  },
+  "csv": {
+    "headers": {
+      "helper": "Helfer",
+      "helperReference": "Helferreferenz",
+      "qualification": "Qualifikation",
+      "validThrough": "Gültig bis",
+      "status": "Status"
+    }
+  }
+}

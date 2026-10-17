@@ -1,0 +1,13 @@
+{
+  "RecordNotFoundError": "The requested record no longer exists.",
+  "InvalidCursorError": "The result cursor is no longer valid.",
+  "InvalidOrganizationError": "The selected organization is not available.",
+  "DuplicateOrganizationError": "An organization with this name already exists.",
+  "DuplicateMasterDataError": "A record with this name already exists.",
+  "InvalidAssignmentError": "The selected record cannot be assigned in its current state.",
+  "InvalidStatusTransitionError": "The requested status change is not allowed.",
+  "DuplicateQualificationAssignmentError": "This qualification is already assigned to the helper.",
+  "UnauthenticatedError": "Authentication required.",
+  "MfaEnrollmentRequiredError": "TOTP enrollment must be completed first.",
+  "ForbiddenError": "Forbidden."
+}

@@ -1,0 +1,96 @@
+{
+  "maintainers": {
+    "back": "Back",
+    "title": "Account management",
+    "messages": {
+      "maintainerGranted": "Maintainer role granted. The user needs no new sign-in.",
+      "maintainerRevoked": "Maintainer role revoked and sessions revoked.",
+      "adminGranted": "Administrator role granted. The user needs no new sign-in.",
+      "adminRevoked": "Administrator role revoked and sessions revoked.",
+      "deleted": "Maintainer account deleted.",
+      "created": "Maintainer created. Share the initial password through a separate secure channel.",
+      "disabled": "Account disabled and its sessions revoked.",
+      "enabled": "Account enabled.",
+      "sessionsRevoked": "Sessions revoked.",
+      "totpReset": "Authenticator reset. The user must enroll again at next sign-in.",
+      "passwordReset": "Password reset and sessions revoked."
+    },
+    "errors": {
+      "invalid": "The input was not valid. Check the fields and try again.",
+      "denied": "That action is not permitted for this account."
+    },
+    "create": {
+      "title": "Create Maintainer",
+      "name": "Name",
+      "email": "Email",
+      "password": "Initial password",
+      "submit": "Create Maintainer"
+    },
+    "accounts": {
+      "title": "Accounts",
+      "columns": {
+        "account": "Account",
+        "roles": "Roles",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "disabled": "Disabled"
+      },
+      "mfa": {
+        "enrolled": "Authenticator enrolled",
+        "pending": "Authenticator pending"
+      },
+      "actions": {
+        "grantMaintainer": "Grant Maintainer role",
+        "self": "This is you",
+        "enable": "Enable",
+        "disable": "Disable",
+        "revokeSessions": "Revoke sessions",
+        "resetAuthenticator": "Reset authenticator",
+        "newPasswordAria": "New password for {email}",
+        "newPasswordPlaceholder": "New password",
+        "resetPassword": "Reset password",
+        "revokeMaintainer": "Revoke Maintainer role",
+        "grantAdmin": "Grant Administrator role",
+        "revokeAdmin": "Revoke Administrator role",
+        "deleteSummary": "Delete account…",
+        "deleteButton": "Permanently delete {email}"
+      }
+    },
+    "roles": {
+      "ADMIN": "Administrator",
+      "MAINTAINER": "Maintainer"
+    }
+  },
+  "retention": {
+    "back": "Back",
+    "title": "Retention schedules",
+    "description": "Record the schedules the organization has formally approved. There are no defaults: until a schedule is approved, nothing is deleted and production use stays blocked. Data is only deleted when an operator runs the retention job.",
+    "saved": "Schedule saved.",
+    "errors": {
+      "denied": "That action is not permitted for this account.",
+      "invalid": "The input was not valid. Check the fields and try again."
+    },
+    "kinds": {
+      "INACTIVE_HELPER": {
+        "title": "Inactive helper records",
+        "help": "Days after a helper becomes inactive before the helper and their qualifications are permanently deleted."
+      },
+      "AUDIT_LOG": {
+        "title": "Audit log",
+        "help": "Days after which audit events are permanently deleted."
+      }
+    },
+    "approved": "Approved: {days} days · approval {reference} · recorded {date}",
+    "notApproved": "Not approved yet.",
+    "form": {
+      "periodLabel": "Period (days) for {title}",
+      "referenceLabel": "Approval reference for {title}",
+      "referenceHelp": "Where the approval is documented, e.g. meeting minutes, ticket or policy number. Not checked by the app.",
+      "confirm": "The organization has formally approved this schedule.",
+      "submit": "Save {title} schedule"
+    }
+  }
+}

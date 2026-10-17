@@ -1,0 +1,49 @@
+{
+  "page": {
+    "backToWorkspace": "Back to workspace",
+    "title": "Qualification catalog",
+    "description": "Create reusable qualifications to assign to helpers. Retired qualifications remain on existing helpers but cannot be newly assigned.",
+    "listAriaLabel": "Qualification catalog",
+    "empty": "No qualification definitions yet."
+  },
+  "catalog": {
+    "create": {
+      "name": "Qualification name",
+      "category": "Category (optional)",
+      "submit": "Add",
+      "pending": "Adding…"
+    },
+    "edit": {
+      "name": "Name",
+      "category": "Category",
+      "status": "Status",
+      "active": "Active",
+      "retired": "Retired",
+      "submit": "Save",
+      "pending": "Saving…"
+    }
+  },
+  "form": {
+    "summary": "Review the highlighted fields.",
+    "qualification": "Qualification",
+    "selectQualification": "Select a qualification",
+    "retired": "retired",
+    "validThrough": "Valid through (optional)",
+    "save": "Save",
+    "add": "Add qualification",
+    "pending": "Saving…",
+    "remove": "Remove qualification",
+    "removing": "Removing…",
+    "definitionError": "Select a qualification.",
+    "validThroughError": "Enter a valid date."
+  },
+  "messages": {
+    "invalidDefinition": "Enter a valid qualification name and optional category.",
+    "duplicate": "A record with this name already exists.",
+    "definitionNotFound": "This qualification definition no longer exists.",
+    "recordNotFound": "The helper profile or qualification no longer exists.",
+    "assignmentUnavailable": "The selected qualification cannot be assigned in its current state.",
+    "alreadyAssigned": "This qualification is already assigned to the helper.",
+    "saved": "Saved."
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "page": {
+    "backToWorkspace": "Zurück zum Arbeitsbereich",
+    "title": "Organisationen",
+    "description": "Wiederverwendbare Liste von Organisationen, bei denen Helfer registriert sind. Stillgelegte Organisationen bleiben bei bestehenden Helfern erhalten, können aber nicht für neue Zuordnungen ausgewählt werden.",
+    "listAriaLabel": "Organisationsliste",
+    "empty": "Noch keine Organisationen vorhanden."
+  },
+  "create": {
+    "name": "Neue Organisation",
+    "submit": "Organisation hinzufügen",
+    "pending": "Wird hinzugefügt…"
+  },
+  "edit": {
+    "name": "Name",
+    "status": "Status",
+    "active": "Aktiv",
+    "retired": "Stillgelegt",
+    "submit": "Speichern",
+    "pending": "Wird gespeichert…"
+  },
+  "messages": {
+    "invalidName": "Geben Sie einen Namen mit maximal 200 Zeichen ein.",
+    "duplicate": "Eine Organisation mit diesem Namen existiert bereits.",
+    "notFound": "Diese Organisation existiert nicht mehr.",
+    "saved": "Gespeichert."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "appName": "Helfer-Verwaltung",
+  "appDescription": "Verwaltungssystem zur Koordination, Planung und Nachverfolgung von Helfern.",
+  "language": "Sprache",
+  "locales": { "en": "English", "de": "Deutsch" }
+}

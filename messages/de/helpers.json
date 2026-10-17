@@ -1,0 +1,54 @@
+{
+  "pages": {
+    "index": {
+      "title": "Helfer",
+      "description": "Helferprofile und Qualifikationen suchen und verwalten.",
+      "auditLog": "Prüfprotokoll",
+      "addHelper": "Helfer hinzufügen",
+      "backToWorkspace": "Zurück zum Arbeitsbereich"
+    },
+    "new": {
+      "back": "Zurück zu den Helfern",
+      "title": "Helfer hinzufügen"
+    },
+    "edit": {
+      "back": "Zurück zum Profil",
+      "title": "Helferprofil bearbeiten"
+    }
+  },
+  "directory": {
+    "searchLabel": "Nach Vor- oder Nachnamen suchen",
+    "search": "Suchen",
+    "loadMore": "Mehr laden",
+    "loading": "Wird geladen…",
+    "noResults": "Keine Helfer gefunden.",
+    "inactive": "Inaktiv",
+    "invalidSearch": "Geben Sie eine gültige Suche ein und versuchen Sie es erneut.",
+    "searchChanged": "Die Suche wurde geändert. Senden Sie die Suche erneut ab, bevor Sie weitere Ergebnisse laden.",
+    "changed": "Das Verzeichnis hat sich geändert. Suchen Sie erneut."
+  },
+  "form": {
+    "summary": "Überprüfen Sie die hervorgehobenen Felder.",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail (optional)",
+    "phone": "Telefon (optional)",
+    "address": "Adresse (optional)",
+    "organization": "Organisation (optional)",
+    "none": "Keine",
+    "retired": "stillgelegt",
+    "status": "Status",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "saveProfile": "Profil speichern",
+    "createHelper": "Helfer anlegen",
+    "saving": "Wird gespeichert…",
+    "firstNameError": "Geben Sie einen Vornamen mit maximal 100 Zeichen ein.",
+    "lastNameError": "Geben Sie einen Nachnamen mit maximal 100 Zeichen ein.",
+    "emailError": "Geben Sie eine gültige E-Mail-Adresse ein.",
+    "phoneError": "Geben Sie eine Telefonnummer mit maximal 50 Zeichen ein.",
+    "addressError": "Geben Sie eine Adresse mit maximal 300 Zeichen ein.",
+    "organizationError": "Wählen Sie eine verfügbare Organisation aus.",
+    "notFound": "Dieses Helferprofil existiert nicht mehr."
+  }
+}

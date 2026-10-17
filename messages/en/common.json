@@ -1,0 +1,6 @@
+{
+  "appName": "Helper Manager",
+  "appDescription": "Management system for coordinating, scheduling, and tracking helpers.",
+  "language": "Language",
+  "locales": { "en": "English", "de": "Deutsch" }
+}

@@ -1,0 +1,38 @@
+{
+  "page": {
+    "backToHelpers": "Back to helpers",
+    "title": "Qualification expiry"
+  },
+  "report": {
+    "description": "Includes expired qualifications and those valid through {through} (UTC), for active and inactive helpers.",
+    "exportCsv": "Export CSV",
+    "empty": "No expired or soon-to-expire qualifications.",
+    "inactive": "Inactive",
+    "reference": "Reference {helperId}",
+    "loadMore": "Load more",
+    "loading": "Loading…",
+    "table": {
+      "helper": "Helper",
+      "qualification": "Qualification",
+      "validThrough": "Valid through",
+      "status": "Status"
+    }
+  },
+  "statusLabels": {
+    "Expired": "Expired",
+    "Expiring": "Expiring"
+  },
+  "messages": {
+    "pageLoadError": "The report page could not be loaded. Refresh and try again.",
+    "reportChanged": "The report changed. Refresh the page to continue."
+  },
+  "csv": {
+    "headers": {
+      "helper": "Helper",
+      "helperReference": "Helper reference",
+      "qualification": "Qualification",
+      "validThrough": "Valid through",
+      "status": "Status"
+    }
+  }
+}

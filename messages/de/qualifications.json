@@ -1,0 +1,49 @@
+{
+  "page": {
+    "backToWorkspace": "Zurück zum Arbeitsbereich",
+    "title": "Qualifikationskatalog",
+    "description": "Erstellen Sie wiederverwendbare Qualifikationen, die Helfern zugewiesen werden können. Stillgelegte Qualifikationen bleiben bei bestehenden Helfern erhalten, können aber nicht neu zugewiesen werden.",
+    "listAriaLabel": "Qualifikationskatalog",
+    "empty": "Noch keine Qualifikationsdefinitionen vorhanden."
+  },
+  "catalog": {
+    "create": {
+      "name": "Name der Qualifikation",
+      "category": "Kategorie (optional)",
+      "submit": "Hinzufügen",
+      "pending": "Wird hinzugefügt…"
+    },
+    "edit": {
+      "name": "Name",
+      "category": "Kategorie",
+      "status": "Status",
+      "active": "Aktiv",
+      "retired": "Stillgelegt",
+      "submit": "Speichern",
+      "pending": "Wird gespeichert…"
+    }
+  },
+  "form": {
+    "summary": "Überprüfen Sie die hervorgehobenen Felder.",
+    "qualification": "Qualifikation",
+    "selectQualification": "Wählen Sie eine Qualifikation aus",
+    "retired": "stillgelegt",
+    "validThrough": "Gültig bis (optional)",
+    "save": "Speichern",
+    "add": "Qualifikation hinzufügen",
+    "pending": "Wird gespeichert…",
+    "remove": "Qualifikation entfernen",
+    "removing": "Wird entfernt…",
+    "definitionError": "Wählen Sie eine Qualifikation aus.",
+    "validThroughError": "Geben Sie ein gültiges Datum ein."
+  },
+  "messages": {
+    "invalidDefinition": "Geben Sie einen gültigen Qualifikationsnamen und optional eine Kategorie ein.",
+    "duplicate": "Ein Eintrag mit diesem Namen existiert bereits.",
+    "definitionNotFound": "Diese Qualifikationsdefinition existiert nicht mehr.",
+    "recordNotFound": "Das Helferprofil oder die Qualifikation existiert nicht mehr.",
+    "assignmentUnavailable": "Die ausgewählte Qualifikation kann in ihrem aktuellen Zustand nicht zugewiesen werden.",
+    "alreadyAssigned": "Diese Qualifikation ist dem Helfer bereits zugewiesen.",
+    "saved": "Gespeichert."
+  }
+}

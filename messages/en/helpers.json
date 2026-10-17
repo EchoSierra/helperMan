@@ -1,0 +1,54 @@
+{
+  "pages": {
+    "index": {
+      "title": "Helpers",
+      "description": "Search and manage helper profiles and qualifications.",
+      "auditLog": "Audit log",
+      "addHelper": "Add helper",
+      "backToWorkspace": "Back to workspace"
+    },
+    "new": {
+      "back": "Back to helpers",
+      "title": "Add helper"
+    },
+    "edit": {
+      "back": "Back to profile",
+      "title": "Edit helper profile"
+    }
+  },
+  "directory": {
+    "searchLabel": "Search first or last name",
+    "search": "Search",
+    "loadMore": "Load more",
+    "loading": "Loading…",
+    "noResults": "No helpers found.",
+    "inactive": "Inactive",
+    "invalidSearch": "Enter a valid search and try again.",
+    "searchChanged": "Search changed. Submit the search before loading more results.",
+    "changed": "The directory changed. Search again."
+  },
+  "form": {
+    "summary": "Review the highlighted fields.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email (optional)",
+    "phone": "Phone (optional)",
+    "address": "Address (optional)",
+    "organization": "Organization (optional)",
+    "none": "None",
+    "retired": "retired",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "saveProfile": "Save profile",
+    "createHelper": "Create helper",
+    "saving": "Saving…",
+    "firstNameError": "Enter a first name of up to 100 characters.",
+    "lastNameError": "Enter a last name of up to 100 characters.",
+    "emailError": "Enter a valid email address.",
+    "phoneError": "Enter a phone number of up to 50 characters.",
+    "addressError": "Enter an address of up to 300 characters.",
+    "organizationError": "Select an available organization.",
+    "notFound": "This helper profile no longer exists."
+  }
+}

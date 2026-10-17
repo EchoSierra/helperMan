@@ -1,0 +1,94 @@
+{
+  "page": {
+    "back": "Zurück zur Übersicht",
+    "title": "Ausrüstung",
+    "description": "Verwalten Sie wiederverwendbare Ausrüstungstypen und einzeln nachverfolgte Gegenstände. Ausgemusterte Gegenstände können nicht erneut zugewiesen werden.",
+    "typesAriaLabel": "Ausrüstungstypen",
+    "emptyTypes": "Es gibt noch keine Ausrüstungstypen.",
+    "typeRetired": "Dieser Typ ist ausgemustert; neue Gegenstände können nicht hinzugefügt werden.",
+    "emptyItems": "Es gibt noch keine einzelnen Gegenstände."
+  },
+  "common": {
+    "save": "Speichern",
+    "saving": "Wird gespeichert…",
+    "cancel": "Abbrechen"
+  },
+  "typeStatus": {
+    "active": "Aktiv",
+    "retired": "Ausgemustert"
+  },
+  "equipmentStatus": {
+    "AVAILABLE": "Verfügbar",
+    "ASSIGNED": "Zugewiesen",
+    "IN_REPAIR": "In Reparatur",
+    "RETIRED": "Ausgemustert"
+  },
+  "forms": {
+    "createType": {
+      "label": "Neuer Ausrüstungstyp",
+      "submit": "Typ hinzufügen",
+      "pending": "Wird hinzugefügt…"
+    },
+    "editType": {
+      "nameLabel": "Ausrüstungstyp",
+      "statusLabel": "Status"
+    },
+    "deleteType": {
+      "open": "Typ löschen…",
+      "warning": "Warnung: Das Löschen von „{name}“ entfernt den Typ, alle zugehörigen Gegenstände sowie sämtliche Zuweisungen und deren Verlauf dauerhaft. Dies kann nicht rückgängig gemacht werden.",
+      "submit": "Dauerhaft löschen",
+      "pending": "Wird gelöscht…"
+    },
+    "createItem": {
+      "assetLabel": "Inventarlabel (optional)",
+      "submit": "Gegenstand hinzufügen",
+      "pending": "Wird hinzugefügt…"
+    },
+    "assignExisting": {
+      "helperLabel": "Helfer zuweisen",
+      "helperPlaceholder": "Helfer auswählen",
+      "submit": "Zuweisen",
+      "pending": "Wird zugewiesen…"
+    },
+    "assignToHelper": {
+      "itemLabel": "Verfügbare Ausrüstung",
+      "itemPlaceholder": "Ausrüstung auswählen",
+      "submit": "Ausrüstung zuweisen",
+      "pending": "Wird zugewiesen…"
+    },
+    "assignNew": {
+      "typeLabel": "Ausrüstungstyp",
+      "typePlaceholder": "Typ auswählen",
+      "assetLabel": "Inventarlabel (optional)",
+      "submit": "Neuen Gegenstand zuweisen",
+      "pending": "Wird zugewiesen…"
+    },
+    "returnItem": {
+      "submit": "Als verfügbar zurückgeben",
+      "pending": "Wird zurückgegeben…"
+    },
+    "changeStatus": {
+      "label": "Status",
+      "submit": "Status speichern",
+      "retiredLocked": "Ausgemusterte Gegenstände können nicht wieder aktiviert werden."
+    }
+  },
+  "item": {
+    "defaultName": "Ausrüstungsgegenstand",
+    "reference": "Gegenstandsreferenz {id}",
+    "referenceFallback": "Gegenstand {id}",
+    "assignedTo": "Zugewiesen an {name}",
+    "inconsistentAssignment": "Dieser Gegenstand hat einen inkonsistenten Zuweisungsdatensatz; wenden Sie sich an einen Administrator."
+  },
+  "messages": {
+    "saved": "Gespeichert.",
+    "validation": {
+      "typeName": "Geben Sie einen gültigen Namen für den Ausrüstungstyp ein.",
+      "assetLabel": "Geben Sie ein gültiges optionales Inventarlabel ein.",
+      "helperRequired": "Wählen Sie zuerst einen Helfer aus.",
+      "itemRequired": "Wählen Sie zuerst einen Ausrüstungsgegenstand aus.",
+      "newAssignment": "Wählen Sie einen Ausrüstungstyp aus und geben Sie ein gültiges optionales Inventarlabel ein.",
+      "statusRequired": "Wählen Sie einen gültigen Ausrüstungsstatus aus."
+    }
+  }
+}
