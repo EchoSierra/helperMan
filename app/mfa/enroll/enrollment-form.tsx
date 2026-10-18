@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { QRCodeSVG } from 'qrcode.react';
 import { authClient } from '@/lib/auth/client';
 
@@ -14,6 +15,7 @@ function getTotpSecret(uri: string): string | null {
 }
 
 export default function EnrollmentForm() {
+  const t = useTranslations('auth');
   const router = useRouter();
   const [password, setPassword] = useState('');
   const [totpUri, setTotpUri] = useState<string | null>(null);
@@ -29,13 +31,13 @@ export default function EnrollmentForm() {
       const result = await authClient.twoFactor.enable({ password, method: 'totp' });
       const data = result.data;
       if (result.error || !data || data.method !== 'totp') {
-        setError('Unable to start authenticator setup. Sign in again or contact an administrator.');
+        setError(t('mfaEnrollForm.errors.start'));
         return;
       }
       setTotpUri(data.totpURI);
       setPassword('');
     } catch {
-      setError('Unable to start authenticator setup. Sign in again or contact an administrator.');
+      setError(t('mfaEnrollForm.errors.start'));
     } finally {
       setPending(false);
     }
@@ -48,12 +50,12 @@ export default function EnrollmentForm() {
     try {
       const result = await authClient.twoFactor.verifyTotp({ code, trustDevice: false });
       if (result.error) {
-        setError('That authenticator code could not be verified. Try the current code again.');
+        setError(t('mfaEnrollForm.errors.verify'));
       } else {
         router.replace('/');
       }
     } catch {
-      setError('Authenticator setup could not be completed. Sign in again or contact an administrator.');
+      setError(t('mfaEnrollForm.errors.complete'));
     } finally {
       setPending(false);
     }
@@ -64,23 +66,23 @@ export default function EnrollmentForm() {
     return (
       <form className="mt-8 space-y-5" onSubmit={verify}>
         <ol className="list-decimal space-y-2 pl-5 text-sm">
-          <li>Open an authenticator app and add a time-based account.</li>
-          <li>Scan this QR code, or enter the setup key manually. Keep both private and do not send them to anyone.</li>
+          <li>{t('mfaEnrollForm.instructions.stepOne')}</li>
+          <li>{t('mfaEnrollForm.instructions.stepTwo')}</li>
         </ol>
-        <div className="inline-block rounded bg-white p-3" role="img" aria-label="Authenticator setup QR code">
+        <div className="inline-block rounded bg-white p-3" role="img" aria-label={t('mfaEnrollForm.qrLabel')}>
           <QRCodeSVG value={totpUri} size={176} />
         </div>
         {secret ? (
-          <code className="block break-all rounded bg-gray-100 p-3 text-sm" aria-label="Authenticator setup key">
+          <code className="block break-all rounded bg-gray-100 p-3 text-sm" aria-label={t('mfaEnrollForm.setupKeyLabel')}>
             {secret}
           </code>
         ) : (
           <p className="text-sm text-red-700" role="alert">
-            The setup key could not be displayed. Start enrollment again.
+            {t('mfaEnrollForm.errors.missingSecret')}
           </p>
         )}
         <label className="block space-y-1">
-          <span className="text-sm font-medium">Six-digit authenticator code</span>
+          <span className="text-sm font-medium">{t('mfaEnrollForm.code')}</span>
           <input
             autoComplete="one-time-code"
             className="w-full rounded border border-gray-300 px-3 py-2"
@@ -98,7 +100,7 @@ export default function EnrollmentForm() {
           disabled={pending || !secret}
           type="submit"
         >
-          {pending ? 'Verifying…' : 'Verify and finish setup'}
+          {pending ? t('mfaEnrollForm.pendingVerify') : t('mfaEnrollForm.submitVerify')}
         </button>
       </form>
     );
@@ -107,7 +109,7 @@ export default function EnrollmentForm() {
   return (
     <form className="mt-8 space-y-5" onSubmit={begin}>
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Confirm your password</span>
+        <span className="text-sm font-medium">{t('mfaEnrollForm.confirmPassword')}</span>
         <input
           autoComplete="current-password"
           className="w-full rounded border border-gray-300 px-3 py-2"
@@ -123,7 +125,7 @@ export default function EnrollmentForm() {
         disabled={pending}
         type="submit"
       >
-        {pending ? 'Preparing…' : 'Start TOTP setup'}
+        {pending ? t('mfaEnrollForm.pendingStart') : t('mfaEnrollForm.submitStart')}
       </button>
     </form>
   );

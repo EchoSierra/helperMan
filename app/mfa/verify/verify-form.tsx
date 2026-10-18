@@ -2,9 +2,11 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { authClient } from '@/lib/auth/client';
 
 export default function VerifyForm() {
+  const t = useTranslations('auth');
   const router = useRouter();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -17,12 +19,12 @@ export default function VerifyForm() {
     try {
       const result = await authClient.twoFactor.verifyTotp({ code, trustDevice: false });
       if (result.error) {
-        setError('That authenticator code could not be verified. Try again or contact an administrator.');
+        setError(t('mfaVerifyForm.errors.invalid'));
       } else {
         router.replace('/');
       }
     } catch {
-      setError('Verification failed. Sign in again or contact an administrator.');
+      setError(t('mfaVerifyForm.errors.failed'));
     } finally {
       setPending(false);
     }
@@ -31,7 +33,7 @@ export default function VerifyForm() {
   return (
     <form className="mt-8 space-y-5" onSubmit={submit}>
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Six-digit authenticator code</span>
+        <span className="text-sm font-medium">{t('mfaVerifyForm.code')}</span>
         <input
           autoComplete="one-time-code"
           className="w-full rounded border border-gray-300 px-3 py-2"
@@ -49,7 +51,7 @@ export default function VerifyForm() {
         disabled={pending}
         type="submit"
       >
-        {pending ? 'Verifying…' : 'Verify'}
+        {pending ? t('mfaVerifyForm.pending') : t('mfaVerifyForm.submit')}
       </button>
     </form>
   );

@@ -2,9 +2,11 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { authClient } from '@/lib/auth/client';
 
 export default function SignInForm() {
+  const t = useTranslations('auth');
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,14 +20,14 @@ export default function SignInForm() {
     try {
       const result = await authClient.signIn.email({ email, password, rememberMe: false });
       if (result.error) {
-        setError('Sign-in failed. Check your credentials or contact an administrator.');
+        setError(t('signInForm.errors.failed'));
       } else if (result.data && 'twoFactorRedirect' in result.data && result.data.twoFactorRedirect) {
         router.replace('/mfa/verify');
       } else {
         router.replace('/mfa/enroll');
       }
     } catch {
-      setError('Sign-in failed. Check your credentials or contact an administrator.');
+      setError(t('signInForm.errors.failed'));
     } finally {
       setPending(false);
     }
@@ -34,7 +36,7 @@ export default function SignInForm() {
   return (
     <form className="mt-8 space-y-5" onSubmit={submit}>
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Email</span>
+        <span className="text-sm font-medium">{t('signInForm.email')}</span>
         <input
           autoComplete="username"
           className="w-full rounded border border-gray-300 px-3 py-2"
@@ -47,7 +49,7 @@ export default function SignInForm() {
         />
       </label>
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Password</span>
+        <span className="text-sm font-medium">{t('signInForm.password')}</span>
         <input
           autoComplete="current-password"
           className="w-full rounded border border-gray-300 px-3 py-2"
@@ -68,7 +70,7 @@ export default function SignInForm() {
         disabled={pending}
         type="submit"
       >
-        {pending ? 'Signing in…' : 'Sign in'}
+        {pending ? t('signInForm.pending') : t('signInForm.submit')}
       </button>
     </form>
   );

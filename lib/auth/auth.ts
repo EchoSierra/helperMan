@@ -167,7 +167,10 @@ function createAuth() {
 
       after: createAuthMiddleware(async (ctx) => {
         const failed = isAPIError(ctx.context.returned);
-        const audit = (actorId: string | null, action: AuditAction) =>
+        const audit = (
+          actorId: string | null,
+          action: Exclude<AuditAction, 'QUALIFICATION_UPDATED' | 'QUALIFICATION_REMOVED'>,
+        ) =>
           recordAuditEvent({ actorId, action, targetType: 'account', targetId: actorId });
 
         const revokeNewSession = async () => {

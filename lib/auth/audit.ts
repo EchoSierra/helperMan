@@ -31,7 +31,26 @@ export const AUDIT_ACTIONS = [
   'QUALIFICATION_READ',
   'QUALIFICATION_CREATED',
   'QUALIFICATION_UPDATED',
+  'QUALIFICATION_REMOVED',
+  'QUALIFICATION_DEFINITION_READ',
+  'QUALIFICATION_DEFINITION_CREATED',
+  'QUALIFICATION_DEFINITION_UPDATED',
+  'QUALIFICATION_DEFINITION_RETIRED',
+  'EQUIPMENT_TYPE_READ',
+  'EQUIPMENT_ITEM_READ',
+  'EQUIPMENT_ASSIGNMENT_READ',
+  'EQUIPMENT_TYPE_CREATED',
+  'EQUIPMENT_TYPE_UPDATED',
+  'EQUIPMENT_TYPE_RETIRED',
+  'EQUIPMENT_TYPE_DELETED',
+  'EQUIPMENT_ITEM_CREATED',
+  'EQUIPMENT_ITEM_STATUS_CHANGED',
+  'EQUIPMENT_ASSIGNED',
+  'EQUIPMENT_RETURNED',
   'QUALIFICATION_EXPIRY_REPORT_ACCESSED',
+  'QUALIFICATION_EXPIRY_REPORT_EXPORTED',
+  'ORGANIZATION_CREATED',
+  'ORGANIZATION_UPDATED',
   'RETENTION_POLICY_SET',
   'RETENTION_RUN',
   'HELPER_PURGED',
@@ -40,35 +59,74 @@ export const AUDIT_ACTIONS = [
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
-/** The complete, deliberately minimal event shape. Time is set by the database. */
-export type AuditEventInput = {
+type AuditTargetType =
+  | 'account'
+  | 'session'
+  | 'helper'
+  | 'qualification'
+  | 'qualification_definition'
+  | 'equipment_type'
+  | 'equipment_item'
+  | 'equipment_assignment'
+  | 'organization'
+  | 'report'
+  | 'retention';
+
+/** Only qualification validity changes may carry old/new values. */
+export type AuditEventInput =
+  | {
+      actorId: string | null;
+      action: 'QUALIFICATION_UPDATED' | 'QUALIFICATION_REMOVED';
+      targetType: 'qualification';
+      targetId: string | null;
+      oldValue: string;
+      newValue: string;
+    }
+  | {
+      actorId: string | null;
+      action: Exclude<AuditAction, 'QUALIFICATION_UPDATED' | 'QUALIFICATION_REMOVED'>;
+      targetType: AuditTargetType;
+      targetId: string | null;
+    };
+
+type AuditEventData = {
   actorId: string | null;
   action: AuditAction;
-  targetType: 'account' | 'session' | 'helper' | 'qualification' | 'report' | 'retention';
+  targetType: AuditTargetType;
   targetId: string | null;
+  oldValue?: string;
+  newValue?: string;
 };
 
 type AuditClient = PrismaClient | Prisma.TransactionClient;
 
+function auditEventData(event: AuditEventInput): AuditEventData {
+  return 'oldValue' in event
+    ? {
+        actorId: event.actorId,
+        action: event.action,
+        targetType: event.targetType,
+        targetId: event.targetId,
+        oldValue: event.oldValue,
+        newValue: event.newValue,
+      }
+    : {
+        actorId: event.actorId,
+        action: event.action,
+        targetType: event.targetType,
+        targetId: event.targetId,
+      };
+}
+
 export async function recordAuditEvent(event: AuditEventInput, client: AuditClient = prisma) {
   await client.auditEvent.create({
-    data: {
-      actorId: event.actorId,
-      action: event.action,
-      targetType: event.targetType,
-      targetId: event.targetId,
-    },
+    data: auditEventData(event),
   });
 }
 
 export async function recordAuditEvents(events: AuditEventInput[], client: AuditClient = prisma) {
   if (events.length === 0) return;
   await client.auditEvent.createMany({
-    data: events.map(({ actorId, action, targetType, targetId }) => ({
-      actorId,
-      action,
-      targetType,
-      targetId,
-    })),
+    data: events.map(auditEventData),
   });
 }
