@@ -1,4 +1,5 @@
 import 'server-only';
+import { Prisma } from '@prisma/client';
 import prisma from '@/lib/db';
 import { requireMaintainer } from '@/lib/auth/guards';
 import { recordAuditEvent, recordAuditEvents } from '@/lib/auth/audit';
@@ -7,7 +8,12 @@ import {
   createQualificationSchema,
   updateQualificationSchema,
 } from '@/features/helpers/schemas';
-import { InvalidCursorError, RecordNotFoundError } from '@/features/helpers/errors';
+import {
+  DuplicateQualificationAssignmentError,
+  InvalidAssignmentError,
+  InvalidCursorError,
+  RecordNotFoundError,
+} from '@/features/helpers/errors';
 import { z } from 'zod';
 
 const qualificationId = z.string().trim().min(1).max(64);
@@ -40,14 +46,26 @@ export async function createQualification(input: unknown): Promise<{ qualificati
   return prisma.$transaction(async (tx) => {
     const helper = await tx.helper.findUnique({ where: { id: data.helperId }, select: { id: true } });
     if (!helper) throw new RecordNotFoundError();
-    const qualification = await tx.helperQualification.create({
-      data: {
-        helperId: data.helperId,
-        title: data.title,
-        validThrough: data.validThrough ? dateOnlyToUtcDate(data.validThrough) : null,
-      },
-      select: { id: true },
-    });
+    const [definition] = await tx.$queryRaw<Array<{ id: string; retired: boolean }>>`
+      SELECT "id", "retired" FROM "qualification_definitions" WHERE "id" = ${data.definitionId} FOR UPDATE
+    `;
+    if (!definition || definition.retired) throw new InvalidAssignmentError();
+    let qualification;
+    try {
+      qualification = await tx.helperQualification.create({
+        data: {
+          helperId: data.helperId,
+          definitionId: data.definitionId,
+          validThrough: data.validThrough ? dateOnlyToUtcDate(data.validThrough) : null,
+        },
+        select: { id: true },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new DuplicateQualificationAssignmentError();
+      }
+      throw error;
+    }
     await recordAuditEvent(
       {
         actorId: actor.userId,
@@ -65,10 +83,18 @@ export async function updateQualification(input: unknown): Promise<void> {
   const data = updateQualificationSchema.parse(input);
   const actor = await requireMaintainer();
   await prisma.$transaction(async (tx) => {
+    const [existing] = await tx.$queryRaw<Array<{ id: string; validThrough: Date | null }>>`
+      SELECT "id", "validThrough" FROM "helper_qualifications"
+      WHERE "id" = ${data.qualificationId} AND "helperId" = ${data.helperId}
+      FOR UPDATE
+    `;
+    if (!existing) throw new RecordNotFoundError();
+    const oldValue = existing.validThrough ? dateOnly(existing.validThrough) : 'Not set';
+    const newValue = data.validThrough ?? 'Not set';
+    if (oldValue === newValue) return;
     const result = await tx.helperQualification.updateMany({
       where: { id: data.qualificationId, helperId: data.helperId },
       data: {
-        title: data.title,
         validThrough: data.validThrough ? dateOnlyToUtcDate(data.validThrough) : null,
       },
     });
@@ -79,6 +105,39 @@ export async function updateQualification(input: unknown): Promise<void> {
         action: 'QUALIFICATION_UPDATED',
         targetType: 'qualification',
         targetId: data.qualificationId,
+        oldValue,
+        newValue,
+      },
+      tx,
+    );
+  });
+}
+
+export async function removeQualification(input: unknown): Promise<void> {
+  const data = z
+    .object({ helperId: qualificationId, qualificationId })
+    .strict()
+    .parse(input);
+  const actor = await requireMaintainer();
+  await prisma.$transaction(async (tx) => {
+    const [existing] = await tx.$queryRaw<Array<{ validThrough: Date | null }>>`
+      SELECT "validThrough" FROM "helper_qualifications"
+      WHERE "id" = ${data.qualificationId} AND "helperId" = ${data.helperId}
+      FOR UPDATE
+    `;
+    if (!existing) throw new RecordNotFoundError();
+    const result = await tx.helperQualification.deleteMany({
+      where: { id: data.qualificationId, helperId: data.helperId },
+    });
+    if (result.count !== 1) throw new RecordNotFoundError();
+    await recordAuditEvent(
+      {
+        actorId: actor.userId,
+        action: 'QUALIFICATION_REMOVED',
+        targetType: 'qualification',
+        targetId: data.qualificationId,
+        oldValue: existing.validThrough ? dateOnly(existing.validThrough) : 'Not set',
+        newValue: 'Removed',
       },
       tx,
     );
@@ -103,8 +162,8 @@ export async function listQualificationExpiries(input: unknown): Promise<Qualifi
       ...(afterId ? { cursor: { id: afterId }, skip: 1 } : {}),
       select: {
         id: true,
-        title: true,
         validThrough: true,
+        definition: { select: { id: true, name: true } },
         helper: { select: { id: true, firstName: true, lastName: true, active: true } },
       },
     });
@@ -124,6 +183,12 @@ export async function listQualificationExpiries(input: unknown): Promise<Qualifi
           action: 'QUALIFICATION_READ' as const,
           targetType: 'qualification' as const,
           targetId: id,
+        })),
+        ...[...new Set(page.map(({ definition }) => definition.id))].map((targetId) => ({
+          actorId: actor.userId,
+          action: 'QUALIFICATION_DEFINITION_READ' as const,
+          targetType: 'qualification_definition' as const,
+          targetId,
         })),
         {
           actorId: actor.userId,
@@ -146,7 +211,7 @@ export async function listQualificationExpiries(input: unknown): Promise<Qualifi
               helperId: record.helper.id,
               helperName: `${record.helper.firstName} ${record.helper.lastName}`,
               helperActive: record.helper.active,
-              qualificationTitle: record.title,
+              qualificationTitle: record.definition.name,
               validThrough,
               status,
             }]
@@ -155,4 +220,26 @@ export async function listQualificationExpiries(input: unknown): Promise<Qualifi
       nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null,
     };
   });
+}
+
+export async function exportQualificationExpiries(): Promise<QualificationExpiryPage['items']> {
+  const items: QualificationExpiryPage['items'] = [];
+  let afterId: string | null = null;
+  let reportDate: string | undefined;
+
+  do {
+    const page = await listQualificationExpiries({ afterId, ...(reportDate ? { reportDate } : {}) });
+    items.push(...page.items);
+    afterId = page.nextCursor;
+    reportDate = page.today;
+  } while (afterId);
+
+  const actor = await requireMaintainer();
+  await recordAuditEvent({
+    actorId: actor.userId,
+    action: 'QUALIFICATION_EXPIRY_REPORT_EXPORTED',
+    targetType: 'report',
+    targetId: 'qualification-expiry',
+  });
+  return items;
 }
