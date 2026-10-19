@@ -30,6 +30,9 @@ beforeEach(async () => {
   await clearAudit();
   await prisma.retentionPolicy.deleteMany();
   await prisma.helper.deleteMany();
+  await prisma.equipmentItem.deleteMany();
+  await prisma.equipmentType.deleteMany();
+  await prisma.qualificationDefinition.deleteMany();
   await prisma.authUser.deleteMany();
   await prisma.authUser.create({ data: { id: 'adm-1', email: 'a@example.test', name: 'A', emailVerified: true } });
 });
@@ -65,9 +68,17 @@ describe('retention schedule maintenance', () => {
 
 describe('inactive-helper retention run', () => {
   async function seed() {
+    const definition = await prisma.qualificationDefinition.create({ data: { name: 'Q' } });
     const mk = (id: string, active: boolean, deactivatedAt: Date | null) =>
       prisma.helper.create({
-        data: { id, firstName: id, lastName: 'X', active, deactivatedAt, qualifications: { create: { title: 'Q' } } },
+        data: {
+          id,
+          firstName: id,
+          lastName: 'X',
+          active,
+          deactivatedAt,
+          qualifications: { create: { definitionId: definition.id } },
+        },
       });
     await mk('old', false, ago(150));
     await mk('recent', false, ago(10));
@@ -95,6 +106,23 @@ describe('inactive-helper retention run', () => {
     const purged = await prisma.auditEvent.findMany({ where: { action: 'HELPER_PURGED' } });
     expect(purged.map((e) => e.targetId)).toEqual(['old']);
     expect(await prisma.auditEvent.count({ where: { action: 'RETENTION_RUN' } })).toBe(1);
+  });
+
+  it('returns equipment to Available when retention purges its assigned helper', async () => {
+    await seed();
+    const type = await prisma.equipmentType.create({ data: { name: 'Vacuum' } });
+    const item = await prisma.equipmentItem.create({
+      data: { equipmentTypeId: type.id, status: 'ASSIGNED' },
+    });
+    await prisma.equipmentAssignment.create({ data: { equipmentItemId: item.id, helperId: 'old' } });
+
+    await runRetention('INACTIVE_HELPER', { now: NOW, confirm: true });
+
+    expect((await prisma.equipmentItem.findUniqueOrThrow({ where: { id: item.id } })).status).toBe('AVAILABLE');
+    expect(await prisma.equipmentAssignment.count({ where: { equipmentItemId: item.id } })).toBe(0);
+    expect(await prisma.auditEvent.count({
+      where: { action: 'EQUIPMENT_ITEM_STATUS_CHANGED', targetType: 'equipment_item', targetId: item.id },
+    })).toBe(1);
   });
 
   it('starts the clock on deactivation and resets it on reactivation', async () => {

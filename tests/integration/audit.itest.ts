@@ -17,6 +17,7 @@ import { clearAudit } from './db';
 import { listAuditEvents } from '@/features/audit/service';
 import { createHelper, getHelperFormData, getHelperProfile, listHelpers } from '@/features/helpers/service';
 import { createQualification, listQualificationExpiries } from '@/features/qualifications/service';
+import { createQualificationDefinition } from '@/features/qualifications/catalog-service';
 import { ForbiddenError } from '@/lib/auth/errors';
 
 const actions = async () => (await prisma.auditEvent.findMany({ select: { action: true } })).map((e) => e.action);
@@ -26,6 +27,7 @@ beforeEach(async () => {
   vi.restoreAllMocks();
   await clearAudit();
   await prisma.helper.deleteMany();
+  await prisma.qualificationDefinition.deleteMany();
   await prisma.authUser.deleteMany();
   await prisma.authUser.create({ data: { id: 'maint-1', email: 'm@example.test', name: 'M', emailVerified: true } });
 });
@@ -56,7 +58,9 @@ function breakAuditWrites() {
 describe('audit reads are recorded and fail closed', () => {
   it('records helper, qualification and report reads', async () => {
     const { helperId } = await createHelper({ firstName: 'A', lastName: 'B' });
-    await createQualification({ helperId, title: 'CPR', validThrough: '2000-01-01' });
+    await createQualificationDefinition({ name: 'CPR' });
+    const definition = await prisma.qualificationDefinition.findFirstOrThrow({ where: { name: 'CPR' } });
+    await createQualification({ helperId, definitionId: definition.id, validThrough: '2000-01-01' });
     await clearAudit();
 
     await listHelpers({});
@@ -72,7 +76,9 @@ describe('audit reads are recorded and fail closed', () => {
 
   it('returns no data when the audit write fails', async () => {
     const { helperId } = await createHelper({ firstName: 'A', lastName: 'B' });
-    await createQualification({ helperId, title: 'CPR', validThrough: '2000-01-01' });
+    await createQualificationDefinition({ name: 'CPR' });
+    const definition = await prisma.qualificationDefinition.findFirstOrThrow({ where: { name: 'CPR' } });
+    await createQualification({ helperId, definitionId: definition.id, validThrough: '2000-01-01' });
     breakAuditWrites();
     await expect(listHelpers({})).rejects.toThrow('audit down');
     await expect(getHelperProfile(helperId)).rejects.toThrow('audit down');
@@ -94,6 +100,19 @@ describe('audit log view', () => {
     await expect(listAuditEvents({})).rejects.toBeInstanceOf(ForbiddenError);
   });
 
+  it('shows names for existing actors and targets and falls back to ids otherwise', async () => {
+    const helper = await prisma.helper.create({ data: { firstName: 'Ada', lastName: 'Lovelace' } });
+    await prisma.auditEvent.createMany({
+      data: [
+        { actorId: 'maint-1', action: 'HELPER_READ', targetType: 'helper', targetId: helper.id, occurredAt: new Date(Date.UTC(2026, 0, 2)) },
+        { actorId: 'gone-actor', action: 'HELPER_READ', targetType: 'helper', targetId: 'gone-helper', occurredAt: new Date(Date.UTC(2026, 0, 1)) },
+      ],
+    });
+    const { items } = await listAuditEvents({});
+    expect(items[0]).toMatchObject({ targetName: 'Ada Lovelace' });
+    expect(items[1]).toMatchObject({ actorName: null, targetName: null });
+  });
+
   it('returns only minimal metadata, newest first, with cursor paging', async () => {
     await prisma.auditEvent.createMany({
       data: Array.from({ length: 55 }, (_, i) => ({
@@ -107,10 +126,26 @@ describe('audit log view', () => {
     const first = await listAuditEvents({});
     expect(first.items).toHaveLength(50);
     expect(first.items[0].targetId).toBe('h54');
-    expect(Object.keys(first.items[0]).sort()).toEqual(['action', 'actorId', 'id', 'occurredAt', 'targetId', 'targetType']);
+    expect(Object.keys(first.items[0]).sort()).toEqual(['action', 'actorId', 'actorName', 'id', 'newValue', 'occurredAt', 'oldValue', 'targetId', 'targetName', 'targetType']);
+    expect(first.items[0]).toMatchObject({ oldValue: null, newValue: null });
     const second = await listAuditEvents({ afterId: first.nextCursor });
     expect(second.items).toHaveLength(5);
     expect(second.nextCursor).toBeNull();
+  });
+
+  it('returns approved qualification validity changes in old/new fields', async () => {
+    await prisma.auditEvent.create({
+      data: {
+        actorId: 'maint-1',
+        action: 'QUALIFICATION_UPDATED',
+        targetType: 'qualification',
+        targetId: 'qualification-1',
+        oldValue: '2030-01-01',
+        newValue: '2031-01-01',
+      },
+    });
+    const page = await listAuditEvents({});
+    expect(page.items[0]).toMatchObject({ oldValue: '2030-01-01', newValue: '2031-01-01' });
   });
 
   it('rejects unknown input', async () => {

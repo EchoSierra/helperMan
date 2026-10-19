@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import type { Prisma, PrismaClient } from '@prisma/client';
+import { EquipmentStatus, Prisma, type PrismaClient } from '@prisma/client';
 import prisma from '@/lib/db';
-import { recordAuditEvent } from '@/lib/auth/audit';
+import { recordAuditEvent, recordAuditEvents } from '@/lib/auth/audit';
 
 export const RETENTION_KINDS = ['INACTIVE_HELPER', 'AUDIT_LOG'] as const;
 export type RetentionKind = (typeof RETENTION_KINDS)[number];
@@ -51,13 +51,51 @@ export async function runRetention(kind: RetentionKind, options: Options = {}): 
     const where = { active: false, deactivatedAt: { lt: cutoff } };
     if (dryRun) return { ...base, eligible: await client.helper.count({ where }), deleted: 0 };
     return client.$transaction(async (tx) => {
-      const eligible = await tx.helper.findMany({ where, select: { id: true } });
+      const eligible = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "helpers"
+        WHERE "active" = false AND "deactivatedAt" < ${cutoff}
+        FOR UPDATE
+      `;
       const ids = eligible.map((helper) => helper.id);
-      // Qualifications cascade from the helper foreign key.
-      const { count } = await tx.helper.deleteMany({ where: { id: { in: ids }, ...where } });
-      for (const id of ids) {
-        await recordAuditEvent({ actorId: null, action: 'HELPER_PURGED', targetType: 'helper', targetId: id }, tx);
+      const assignedItems = ids.length
+        ? await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+            SELECT "id" FROM "equipment_items"
+            WHERE "status" = 'ASSIGNED'
+              AND "id" IN (
+                SELECT "equipmentItemId" FROM "equipment_assignments"
+                WHERE "helperId" IN (${Prisma.join(ids)}) AND "returnedAt" IS NULL
+              )
+            FOR UPDATE
+          `)
+        : [];
+      if (assignedItems.length) {
+        await tx.equipmentItem.updateMany({
+          where: {
+            id: { in: assignedItems.map(({ id }) => id) },
+            status: EquipmentStatus.ASSIGNED,
+          },
+          data: { status: EquipmentStatus.AVAILABLE },
+        });
       }
+      // Qualifications and helper-linked assignment history cascade with the helper.
+      const { count } = await tx.helper.deleteMany({ where: { id: { in: ids }, ...where } });
+      await recordAuditEvents(
+        [
+          ...ids.map((id) => ({
+            actorId: null,
+            action: 'HELPER_PURGED' as const,
+            targetType: 'helper' as const,
+            targetId: id,
+          })),
+          ...assignedItems.map(({ id }) => ({
+            actorId: null,
+            action: 'EQUIPMENT_ITEM_STATUS_CHANGED' as const,
+            targetType: 'equipment_item' as const,
+            targetId: id,
+          })),
+        ],
+        tx,
+      );
       await recordAuditEvent({ actorId: null, action: 'RETENTION_RUN', targetType: 'retention', targetId: kind }, tx);
       return { ...base, eligible: ids.length, deleted: count };
     });
