@@ -1,6 +1,7 @@
 'use server';
 
 import { formFields } from '@/features/form-data';
+import { getTranslations } from 'next-intl/server';
 import { requireMaintainer } from '@/lib/auth/guards';
 import { InvalidCursorError } from '@/features/helpers/errors';
 import type { QualificationExpiryActionState } from '@/features/helpers/action-state';
@@ -20,9 +21,10 @@ export async function loadMoreQualificationExpiriesAction(
   formData: FormData,
 ): Promise<QualificationExpiryActionState> {
   await requireMaintainer();
+  const t = await getTranslations('reports');
   const parsed = cursorSchema.safeParse(formFields(formData));
   if (!parsed.success || !parsed.data.afterId) {
-    return { ...previous, message: 'The report page could not be loaded. Refresh and try again.' };
+    return { ...previous, message: t('messages.pageLoadError') };
   }
   try {
     const result = await listQualificationExpiries({
@@ -35,7 +37,7 @@ export async function loadMoreQualificationExpiriesAction(
     };
   } catch (error) {
     if (error instanceof InvalidCursorError) {
-      return { ...previous, nextCursor: null, message: 'The report changed. Refresh the page to continue.' };
+      return { ...previous, nextCursor: null, message: t('messages.reportChanged') };
     }
     throw error;
   }
