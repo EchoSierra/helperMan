@@ -1,6 +1,6 @@
 # Helper Manager
 
-Helper Manager is a Next.js application for managing helper profiles and qualifications. It uses PostgreSQL and Prisma. Authentication is email/password with mandatory TOTP for privileged accounts.
+Helper Manager is a Next.js application for managing helpers, reusable organizations, qualification definitions and assignments, and individually tracked equipment. It uses PostgreSQL and Prisma. Authentication is email/password with mandatory TOTP for privileged accounts.
 
 ## Requirements
 
@@ -117,7 +117,7 @@ Administrators record the organization's approved schedules at `/admin/retention
 
 ```bash
 npm run retention:run -- --kind inactive-helper            # dry run: counts only
-npm run retention:run -- --kind inactive-helper --confirm  # hard-deletes helpers inactive longer than the period, with qualifications
+npm run retention:run -- --kind inactive-helper --confirm  # hard-deletes helpers and linked assignments; releases their equipment
 RETENTION_DATABASE_URL='<privileged role>' npm run retention:run -- --kind audit-log --confirm
 ```
 

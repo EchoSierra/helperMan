@@ -59,26 +59,24 @@ describe('helper input schemas', () => {
 });
 
 describe('qualification input schemas', () => {
-  it('requires a title and accepts only date-only valid-through values', () => {
-    expect(createQualificationSchema.safeParse({ helperId: 'helper-1', title: 'First aid', validThrough: '' }).success).toBe(true);
-    expect(createQualificationSchema.safeParse({ helperId: 'helper-1', title: ' ', validThrough: null }).success).toBe(false);
-    expect(createQualificationSchema.safeParse({ helperId: 'helper-1', title: 'First aid', validThrough: '2030-02-30' }).success).toBe(false);
-    expect(createQualificationSchema.safeParse({ helperId: 'helper-1', title: 'First aid', validThrough: '2030-02-01T00:00:00Z' }).success).toBe(false);
+  it('requires a catalog definition and accepts only date-only valid-through values', () => {
+    expect(createQualificationSchema.safeParse({ helperId: 'helper-1', definitionId: 'definition-1', validThrough: '' }).success).toBe(true);
+    expect(createQualificationSchema.safeParse({ helperId: 'helper-1', definitionId: '', validThrough: null }).success).toBe(false);
+    expect(createQualificationSchema.safeParse({ helperId: 'helper-1', definitionId: 'definition-1', validThrough: '2030-02-30' }).success).toBe(false);
+    expect(createQualificationSchema.safeParse({ helperId: 'helper-1', definitionId: 'definition-1', validThrough: '2030-02-01T00:00:00Z' }).success).toBe(false);
   });
 
   it('requires helper and qualification IDs on updates and rejects extra fields', () => {
     expect(updateQualificationSchema.safeParse({
       helperId: 'helper-1',
       qualificationId: 'qualification-1',
-      title: 'First aid',
       validThrough: null,
     }).success).toBe(true);
     expect(updateQualificationSchema.safeParse({
       helperId: 'helper-1',
       qualificationId: 'qualification-1',
-      title: 'First aid',
+      definitionId: 'definition-1',
       validThrough: null,
-      actorId: 'forged',
     }).success).toBe(false);
   });
 });

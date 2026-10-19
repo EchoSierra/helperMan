@@ -25,6 +25,9 @@ export async function resetDatabase() {
   await prisma.qualification.deleteMany();
   await prisma.retentionPolicy.deleteMany();
   await prisma.helper.deleteMany();
+  await prisma.equipmentItem.deleteMany();
+  await prisma.equipmentType.deleteMany();
+  await prisma.qualificationDefinition.deleteMany();
   await prisma.authUser.deleteMany();
 }
 

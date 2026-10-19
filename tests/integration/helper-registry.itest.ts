@@ -16,16 +16,20 @@ vi.mock('@/lib/auth/guards', async () => {
 import prisma from '@/lib/db';
 import { clearAudit } from './db';
 import { createHelper, listHelpers, updateHelper } from '@/features/helpers/service';
-import { createQualification, updateQualification } from '@/features/qualifications/service';
+import { createQualification, removeQualification, updateQualification } from '@/features/qualifications/service';
 import { ForbiddenError } from '@/lib/auth/errors';
 import { RecordNotFoundError } from '@/features/helpers/errors';
 
 const actions = async () => (await prisma.auditEvent.findMany({ select: { action: true } })).map((e) => e.action);
 
+const qualificationDefinition = async (name: string) =>
+  prisma.qualificationDefinition.create({ data: { name } });
+
 beforeEach(async () => {
   actor.roles = ['MAINTAINER'];
   await clearAudit();
   await prisma.helper.deleteMany();
+  await prisma.qualificationDefinition.deleteMany();
   await prisma.authUser.deleteMany();
   await prisma.authUser.create({
     data: { id: 'maint-1', email: 'm@example.test', name: 'M', emailVerified: true },
@@ -81,25 +85,37 @@ describe('qualifications (PostgreSQL)', () => {
   it('creates and updates a qualification scoped to its helper', async () => {
     const { helperId } = await createHelper({ firstName: 'A', lastName: 'B' });
     const other = await createHelper({ firstName: 'C', lastName: 'D' });
-    const { qualificationId } = await createQualification({ helperId, title: 'First aid', validThrough: '2027-01-31' });
+    const definition = await qualificationDefinition('First aid');
+    const { qualificationId } = await createQualification({ helperId, definitionId: definition.id, validThrough: '2027-01-31' });
     const row = await prisma.helperQualification.findUniqueOrThrow({ where: { id: qualificationId } });
     expect(row.validThrough?.toISOString().slice(0, 10)).toBe('2027-01-31');
 
-    await expect(
-      updateQualification({ helperId: other.helperId, qualificationId, title: 'x', validThrough: '' }),
-    ).rejects.toBeInstanceOf(RecordNotFoundError);
-    await updateQualification({ helperId, qualificationId, title: 'CPR', validThrough: '' });
+    await expect(updateQualification({ helperId: other.helperId, qualificationId, validThrough: '' })).rejects.toBeInstanceOf(RecordNotFoundError);
+    const cpr = await qualificationDefinition('CPR');
+    await expect(updateQualification({ helperId, qualificationId, definitionId: cpr.id, validThrough: '' })).rejects.toThrow();
+    await updateQualification({ helperId, qualificationId, validThrough: '' });
     const updated = await prisma.helperQualification.findUniqueOrThrow({ where: { id: qualificationId } });
-    expect(updated).toMatchObject({ title: 'CPR', validThrough: null });
+    expect(updated).toMatchObject({ definitionId: definition.id, validThrough: null });
+    const updateEvent = await prisma.auditEvent.findFirstOrThrow({ where: { action: 'QUALIFICATION_UPDATED' } });
+    expect(updateEvent).toMatchObject({ oldValue: '2027-01-31', newValue: 'Not set' });
+    const eventCount = await prisma.auditEvent.count();
+    await updateQualification({ helperId, qualificationId, validThrough: '' });
+    expect(await prisma.auditEvent.count()).toBe(eventCount);
+
+    await removeQualification({ helperId, qualificationId });
+    expect(await prisma.helperQualification.findUnique({ where: { id: qualificationId } })).toBeNull();
+    const removeEvent = await prisma.auditEvent.findFirstOrThrow({ where: { action: 'QUALIFICATION_REMOVED' } });
+    expect(removeEvent).toMatchObject({ targetId: qualificationId, oldValue: 'Not set', newValue: 'Removed' });
     expect(await actions()).toEqual(expect.arrayContaining(['QUALIFICATION_CREATED', 'QUALIFICATION_UPDATED']));
   });
 
   it('rejects a qualification for a missing helper and cascades on helper delete', async () => {
-    await expect(createQualification({ helperId: 'missing', title: 'X', validThrough: '' })).rejects.toBeInstanceOf(
+    const definition = await qualificationDefinition('X');
+    await expect(createQualification({ helperId: 'missing', definitionId: definition.id, validThrough: '' })).rejects.toBeInstanceOf(
       RecordNotFoundError,
     );
     const { helperId } = await createHelper({ firstName: 'A', lastName: 'B' });
-    await createQualification({ helperId, title: 'X', validThrough: '' });
+    await createQualification({ helperId, definitionId: definition.id, validThrough: '' });
     await prisma.helper.delete({ where: { id: helperId } });
     expect(await prisma.helperQualification.count()).toBe(0);
   });

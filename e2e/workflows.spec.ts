@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { PASSWORD, newPage, withClientIp, hydrated, firstSignIn, prisma, resetDatabase, seedUser, signIn, signInWithPassword } from './support';
 
 const ADMIN = 'admin@example.test';
@@ -58,23 +59,103 @@ test('Administrator creates a Maintainer who enrolls and manages helpers and qua
   await hydrated(maint);
   await expect(maint.getByRole('heading', { name: 'Account management' })).toBeHidden();
 
+  await maint.goto('/qualifications');
+  await hydrated(maint);
+  await maint.getByLabel('Qualification name').fill('First aid');
+  await maint.getByLabel('Category (optional)').fill('Safety');
+  await maint.getByRole('button', { name: 'Add' }).click();
+  await expect(
+    maint.getByRole('region', { name: 'Qualification catalog' }).getByLabel('Name'),
+  ).toHaveValue('First aid');
+
   await maint.goto('/helpers/new');
   await hydrated(maint);
   await maint.getByLabel('First name').fill('Erika');
   await maint.getByLabel('Last name').fill('Musterfrau');
   await maint.getByRole('button', { name: /save|create|add/i }).click();
   await expect(maint.getByText('Erika Musterfrau').first()).toBeVisible();
+  const helperProfileUrl = maint.url();
 
-  await maint.getByLabel('Qualification title').fill('First aid');
+  await maint.locator('select[name="definitionId"]').first().selectOption({ label: 'First aid — Safety' });
   const soon = new Date(Date.now() + 10 * 86400_000).toISOString().slice(0, 10);
   await maint.getByLabel('Valid through (optional)').fill(soon);
   await maint.getByRole('button', { name: 'Add qualification' }).click();
   await expect(maint.getByRole('button', { name: 'Save' })).toBeVisible();
-  await expect(maint.getByLabel('Qualification title').first()).toHaveValue('First aid');
+  const qualificationEditor = maint.getByRole('button', { name: 'Save' }).locator('xpath=..');
+  await expect(qualificationEditor.locator('select[name="definitionId"]')).toHaveCount(0);
+  const later = new Date(new Date(`${soon}T00:00:00Z`).getTime() + 86400_000).toISOString().slice(0, 10);
+  await qualificationEditor.getByLabel('Valid through (optional)').fill(later);
+  await qualificationEditor.getByRole('button', { name: 'Save' }).click();
+  await expect(qualificationEditor.getByLabel('Valid through (optional)')).toHaveValue(later);
+  await maint.goto('/audit');
+  await hydrated(maint);
+  const validityEvent = maint.getByRole('row').filter({ hasText: 'Qualification updated' });
+  await expect(validityEvent).toContainText(soon);
+  await expect(validityEvent).toContainText(later);
 
   await maint.goto('/reports/qualification-expiry');
   await hydrated(maint);
   await expect(maint.getByText('First aid').first()).toBeVisible();
+  const downloadPromise = maint.waitForEvent('download');
+  await maint.getByRole('link', { name: 'Export CSV' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('qualification-expiry.csv');
+  const downloadPath = await download.path();
+  expect(downloadPath).not.toBeNull();
+  const csv = await readFile(downloadPath ?? '', 'utf8');
+  expect(csv).toContain('"First aid"');
+  expect(csv).toContain('"Erika Musterfrau"');
+  expect((await prisma.auditEvent.findMany({ where: { action: 'QUALIFICATION_EXPIRY_REPORT_EXPORTED' } }))).toHaveLength(1);
+
+  await maint.goto(helperProfileUrl);
+  await hydrated(maint);
+  await maint.getByRole('button', { name: 'Remove qualification' }).click();
+  await expect(maint.getByRole('button', { name: 'Remove qualification' })).toBeHidden();
+  await expect(maint.getByText('No qualifications recorded.')).toBeVisible();
+  const removalAudit = await prisma.auditEvent.findFirst({ where: { action: 'QUALIFICATION_REMOVED' } });
+  expect(removalAudit).toMatchObject({ oldValue: later, newValue: 'Removed' });
+  await maint.goto('/audit');
+  await hydrated(maint);
+  const removalEvent = maint.getByRole('row').filter({ hasText: 'Qualification removed' });
+  await expect(removalEvent).toContainText(later);
+  await expect(removalEvent).toContainText('Removed');
+
+  await maint.goto('/equipment');
+  await hydrated(maint);
+  await maint.getByLabel('New equipment type').fill('Vacuum cleaner');
+  await maint.getByRole('button', { name: 'Add type' }).click();
+  const typeSection = maint.getByRole('region', { name: 'Vacuum cleaner' });
+  await expect(typeSection).toBeVisible();
+  await typeSection.getByLabel('Asset label (optional)').fill('VAC-01');
+  await typeSection.getByRole('button', { name: 'Add item' }).click();
+  await typeSection.getByLabel('Assign to helper').selectOption({ label: 'Erika Musterfrau' });
+  await typeSection.getByRole('button', { name: 'Assign' }).click();
+  await expect(typeSection.getByText('Assigned to Erika Musterfrau')).toBeVisible();
+  await maint.goto(helperProfileUrl);
+  await hydrated(maint);
+  await expect(maint.getByRole('heading', { name: 'Assigned equipment' })).toBeVisible();
+  await expect(maint.getByRole('listitem').filter({ hasText: 'Vacuum cleaner' })).toBeVisible();
+  await maint.goto('/equipment');
+  await hydrated(maint);
+  await typeSection.getByLabel('Asset label (optional)').fill('VAC-02');
+  await typeSection.getByRole('button', { name: 'Add item' }).click();
+  await maint.goto(helperProfileUrl);
+  await hydrated(maint);
+  await maint.getByLabel('Available equipment').selectOption({ label: 'Vacuum cleaner · VAC-02' });
+  await maint.getByRole('button', { name: 'Assign equipment' }).click();
+  await expect(maint.getByText('VAC-02 · Assigned')).toBeVisible();
+  await maint.getByLabel('Equipment type').selectOption({ label: 'Vacuum cleaner' });
+  await maint.getByLabel('Asset label (optional)').fill('VAC-03');
+  await maint.getByRole('button', { name: 'Assign new item' }).click();
+  await expect(maint.getByText('VAC-03 · Assigned')).toBeVisible();
+  await maint.getByRole('listitem').filter({ hasText: 'VAC-03' }).getByRole('button', { name: 'Remove from helper' }).click();
+  await expect(maint.getByRole('listitem').filter({ hasText: 'VAC-03' })).toHaveCount(0);
+  await maint.goto('/equipment');
+  await hydrated(maint);
+  await typeSection.getByRole('button', { name: 'Delete type…' }).click();
+  await expect(maint.getByText(/permanently removes the type, all of its individual items/)).toBeVisible();
+  await typeSection.getByRole('button', { name: 'Delete permanently' }).click();
+  await expect(maint.getByText('Vacuum cleaner')).toHaveCount(0);
 
   await adminCtx.close();
   await maintCtx.close();
@@ -87,6 +168,14 @@ test('Administrator without Maintainer role cannot reach helper data', async ({ 
   await page.goto('/helpers');
   await hydrated(page);
   await expect(page.getByRole('heading', { name: 'Helpers', exact: true })).toBeHidden();
+  await page.goto('/qualifications');
+  await hydrated(page);
+  await expect(page.getByRole('heading', { name: 'Qualification catalog' })).toBeHidden();
+  await page.goto('/equipment');
+  await hydrated(page);
+  await expect(page.getByRole('heading', { name: 'Equipment', exact: true })).toBeHidden();
+  const exportResponse = await page.request.get('/reports/qualification-expiry/export');
+  expect(exportResponse.status()).toBe(403);
   await page.goto('/admin/maintainers');
   await hydrated(page);
   await expect(page.getByRole('heading', { name: 'Account management' })).toBeVisible();

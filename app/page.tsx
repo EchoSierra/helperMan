@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import SignOutButton from './sign-out-button';
 import { getAccessContext } from '@/lib/auth/guards';
 import { canAccessHelperData, canManageAccounts } from '@/lib/auth/policy';
 
 export default async function Home() {
+  const t = await getTranslations('auth');
   const access = await getAccessContext();
   if (access.status === 'unauthenticated' || access.status === 'session-expired') redirect('/sign-in');
   if (access.status === 'mfa-enrollment-required') redirect('/mfa/enroll');
@@ -12,9 +14,9 @@ export default async function Home() {
   if (access.status !== 'granted') {
     return (
       <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6">
-        <h1 className="text-3xl font-semibold">Account unavailable</h1>
-        <p className="mt-3 text-gray-700">Contact an administrator to restore access.</p>
-        <Link className="mt-6 underline" href="/sign-in">Return to sign in</Link>
+        <h1 className="text-3xl font-semibold">{t('home.unavailable.title')}</h1>
+        <p className="mt-3 text-gray-700">{t('home.unavailable.body')}</p>
+        <Link className="mt-6 underline" href="/sign-in">{t('home.unavailable.link')}</Link>
       </main>
     );
   }
@@ -23,31 +25,34 @@ export default async function Home() {
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-10">
       <header className="flex items-center justify-between border-b border-gray-200 pb-5">
         <div>
-          <h1 className="text-3xl font-semibold">Helper Manager</h1>
-          <p className="mt-1 text-sm text-gray-600">Secure workspace</p>
+          <h1 className="text-3xl font-semibold">{t('home.header.title')}</h1>
+          <p className="mt-1 text-sm text-gray-600">{t('home.header.subtitle')}</p>
         </div>
         <SignOutButton />
       </header>
       <section className="py-12">
-        <h2 className="text-xl font-medium">Your account is protected</h2>
+        <h2 className="text-xl font-medium">{t('home.protectedTitle')}</h2>
         {canAccessHelperData(access) ? (
-          <nav aria-label="Maintainer workspace" className="mt-6 flex flex-wrap gap-3">
-            <Link className="rounded bg-black px-4 py-2 text-white" href="/helpers">Helper directory</Link>
-            <Link className="rounded border border-gray-400 px-4 py-2" href="/reports/qualification-expiry">Qualification expiry</Link>
+          <nav aria-label={t('home.maintainerNav.ariaLabel')} className="mt-6 flex flex-wrap gap-3">
+            <Link className="rounded bg-black px-4 py-2 text-white" href="/helpers">{t('home.maintainerNav.helpers')}</Link>
+            <Link className="rounded border border-gray-400 px-4 py-2" href="/reports/qualification-expiry">{t('home.maintainerNav.reports')}</Link>
+            <Link className="rounded border border-gray-400 px-4 py-2" href="/organizations">{t('home.maintainerNav.organizations')}</Link>
+            <Link className="rounded border border-gray-400 px-4 py-2" href="/qualifications">{t('home.maintainerNav.qualifications')}</Link>
+            <Link className="rounded border border-gray-400 px-4 py-2" href="/equipment">{t('home.maintainerNav.equipment')}</Link>
           </nav>
         ) : null}
         {canManageAccounts(access) && (
-          <nav aria-label="Administration" className="mt-6 flex flex-wrap gap-3">
-            <Link className="rounded bg-black px-4 py-2 text-white" href="/admin/maintainers">Account management</Link>
-            <Link className="rounded bg-black px-4 py-2 text-white" href="/admin/retention">Retention schedules</Link>
+          <nav aria-label={t('home.adminNav.ariaLabel')} className="mt-6 flex flex-wrap gap-3">
+            <Link className="rounded bg-black px-4 py-2 text-white" href="/admin/maintainers">{t('home.adminNav.accounts')}</Link>
+            <Link className="rounded bg-black px-4 py-2 text-white" href="/admin/retention">{t('home.adminNav.retention')}</Link>
           </nav>
         )}
         {!canAccessHelperData(access) && (
           <p className="mt-3 max-w-2xl text-gray-700">
-            Sign-in, multi-factor authentication, session expiry, and role checks are active. Helper data requires the Maintainer role.
+            {t('home.limitedAccess')}
           </p>
         )}
-        <p className="mt-8 text-sm"><Link className="underline" href="/account/password">Change password</Link></p>
+        <p className="mt-8 text-sm"><Link className="underline" href="/account/password">{t('home.changePassword')}</Link></p>
       </section>
     </main>
   );

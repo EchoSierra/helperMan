@@ -114,6 +114,7 @@ describe('password change auditing', () => {
     await expect(attempt({ currentPassword: 'nope' }, await validCode())).rejects.toBeInstanceOf(ForbiddenError);
     const events = await prisma.auditEvent.findMany();
     expect(events.map((e) => e.action)).toEqual(['PASSWORD_CHANGE_FAILED', 'PASSWORD_CHANGE_FAILED']);
-    expect(Object.keys(events[0]).sort()).toEqual(['action', 'actorId', 'id', 'occurredAt', 'targetId', 'targetType']);
+    expect(Object.keys(events[0]).sort()).toEqual(['action', 'actorId', 'id', 'newValue', 'occurredAt', 'oldValue', 'targetId', 'targetType']);
+    expect(events[0]).toMatchObject({ oldValue: null, newValue: null });
   });
 });
